@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import Card from "@/components/ui/Card";
 import EmptyState from "@/components/ui/EmptyState";
@@ -58,7 +59,11 @@ export default function EventsTable({ events, filters }: EventsTableProps) {
                     <StatusBadge label={event.status} tone={statusTone as "active" | "resolved"} />
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-300">{event.labelId}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-300">{event.shipmentId}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-300">
+                    <Link href={`/shipments/${event.shipmentId}`} className="text-cyan-300 transition hover:text-cyan-200">
+                      {event.shipmentId}
+                    </Link>
+                  </td>
                   <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-300">{event.assetId}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-300">{event.customer ?? "—"}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-300">{event.currentLocation ?? "—"}</td>

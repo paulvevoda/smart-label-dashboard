@@ -1,4 +1,5 @@
-import type { LogisticsAsset, RiskStatus } from "./types";
+import { mockData } from "./mockData";
+import type { Alert, LogisticsAsset, RiskStatus, SensorEvent, Shipment, SmartLabel } from "./types";
 
 export const getRiskStatus = (negativeAlerts: number, labelsPresent: number): RiskStatus => {
   if (labelsPresent <= 0) return "Normal";
@@ -26,4 +27,24 @@ export const getRiskColor = (riskStatus: RiskStatus) => {
     default:
       return "#22d3ee";
   }
+};
+
+export const getShipmentById = (shipmentId: string): Shipment | undefined => {
+  return mockData.shipments.find((shipment) => shipment.id === shipmentId);
+};
+
+export const getLabelsByShipmentId = (shipmentId: string): SmartLabel[] => {
+  return mockData.smartLabels.filter((label) => label.assignedShipmentId === shipmentId);
+};
+
+export const getAlertsByShipmentId = (shipmentId: string): Alert[] => {
+  return mockData.alerts.filter((alert) => alert.shipmentId === shipmentId);
+};
+
+export const getEventsByShipmentId = (shipmentId: string): Array<Alert | SensorEvent> => {
+  return [...mockData.alerts.filter((alert) => alert.shipmentId === shipmentId), ...mockData.sensorEvents.filter((event) => event.shipmentId === shipmentId)].sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+};
+
+export const getAssetById = (assetId: string): LogisticsAsset | undefined => {
+  return mockData.logisticsAssets.find((asset) => asset.id === assetId);
 };
