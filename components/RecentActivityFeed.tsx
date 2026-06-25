@@ -1,12 +1,8 @@
-const activityItems = [
-  { title: "Temperature Alert", detail: "Cold chain threshold exceeded in Corridor 3", time: "2 min ago" },
-  { title: "Humidity Alert", detail: "Humidity spike detected near distribution hub", time: "8 min ago" },
-  { title: "Shock Detected", detail: "Package handling anomaly recorded", time: "12 min ago" },
-  { title: "Light Exposure", detail: "Sensitive cargo exposed during transit", time: "19 min ago" },
-  { title: "Tamper Detected", detail: "Seal integrity compromised on one pallet", time: "24 min ago" },
-];
+import { commandCenterSummary } from "@/data";
 
 export default function RecentActivityFeed() {
+  const activityItems = commandCenterSummary.recentActivityFeed;
+
   return (
     <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 shadow-2xl shadow-black/20">
       <div className="flex items-center justify-between">

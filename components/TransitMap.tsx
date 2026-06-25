@@ -9,15 +9,16 @@ import AssetDetailPanel from "@/components/AssetDetailPanel";
 import MapRiskLegend from "@/components/MapRiskLegend";
 import TransitMapControls from "@/components/TransitMapControls";
 import Card from "@/components/ui/Card";
-import { riskColors, transitAssets, transitLanes, type TransitAsset } from "@/data/transitMapDemoData";
+import { mockData, getRiskColor } from "@/data";
+import type { LogisticsAsset } from "@/data/types";
 
 const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false });
 const Marker = dynamic(() => import("react-leaflet").then((mod) => mod.Marker), { ssr: false });
 const Polyline = dynamic(() => import("react-leaflet").then((mod) => mod.Polyline), { ssr: false });
 
-const getIcon = (asset: TransitAsset) => {
-  const color = riskColors[asset.riskStatus];
+const getIcon = (asset: LogisticsAsset) => {
+  const color = getRiskColor(asset.riskStatus);
   return divIcon({
     html: `<div style="background:${color};width:14px;height:14px;border-radius:9999px;border:2px solid rgba(255,255,255,0.9);box-shadow:0 0 0 6px rgba(15,23,42,0.2);"></div>`,
     className: "border-0 bg-transparent",
@@ -30,10 +31,10 @@ export default function TransitMap() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [criticalOnly, setCriticalOnly] = useState(false);
-  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(transitAssets[0]?.id ?? null);
+  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(mockData.logisticsAssets[0]?.id ?? null);
 
   const filteredAssets = useMemo(() => {
-    return transitAssets.filter((asset) => {
+    return mockData.logisticsAssets.filter((asset) => {
       const matchesSearch = [asset.id, asset.labelId, asset.customer, asset.location.city, asset.location.state, asset.carrier]
         .join(" ")
         .toLowerCase()
@@ -75,10 +76,10 @@ export default function TransitMap() {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
 
-              {transitLanes.map((lane) => (
+              {mockData.transitLanes.map((lane) => (
                 <Polyline
-                  key={`${lane.from}-${lane.to}`}
-                  positions={lane.coordinates}
+                  key={lane.id}
+                  positions={mockData.logisticsNodes.filter((node) => [lane.originNode, lane.destinationNode].includes(node.id)).map((node) => node.coordinates)}
                   pathOptions={{ color: "#38bdf8", weight: 2, opacity: 0.45 }}
                 />
               ))}

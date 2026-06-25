@@ -1,10 +1,10 @@
-import type { TransitAsset } from "@/data/transitMapDemoData";
 import Card from "@/components/ui/Card";
 import RiskBadge from "@/components/ui/RiskBadge";
 import StatusBadge from "@/components/ui/StatusBadge";
+import type { LogisticsAsset } from "@/data/types";
 
 type AssetDetailPanelProps = {
-  asset: TransitAsset | null;
+  asset: LogisticsAsset | null;
 };
 
 const formatRate = (value: number) => `${(value * 100).toFixed(1)}%`;
