@@ -1,7 +1,9 @@
 import AppShell from "@/components/AppShell";
 import DonutPlaceholder from "@/components/DonutPlaceholder";
-import KpiCard from "@/components/KpiCard";
 import RecentActivityFeed from "@/components/RecentActivityFeed";
+import Card from "@/components/ui/Card";
+import KpiCard from "@/components/ui/KpiCard";
+import StatusBadge from "@/components/ui/StatusBadge";
 
 const kpis = [
   { label: "Labels Reporting", value: "94.2%", detail: "Across all monitored lanes", tone: "cyan" as const },
@@ -36,7 +38,7 @@ export default function Home() {
       title="Command Center"
       description="Executive overview of Smart Label network performance, risk, and movement."
     >
-      <section className="rounded-[2rem] border border-cyan-400/20 bg-slate-950/70 p-6 shadow-2xl shadow-black/30 sm:p-8">
+      <Card className="border-cyan-400/20 bg-slate-950/70">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm uppercase tracking-[0.35em] text-cyan-400">Global network pulse</p>
@@ -48,13 +50,20 @@ export default function Home() {
           <div className="rounded-2xl border border-cyan-400/20 bg-cyan-500/10 px-6 py-4 text-right">
             <p className="text-sm text-cyan-200">Network health</p>
             <p className="mt-1 text-4xl font-semibold text-white">18,492</p>
+            <div className="mt-3 flex justify-end">
+              <StatusBadge label="Active" tone="active" />
+            </div>
           </div>
         </div>
-      </section>
+      </Card>
 
       <section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {kpis.map((item) => (
-          <KpiCard key={item.label} {...item} />
+          <KpiCard
+            key={item.label}
+            {...item}
+            status={<StatusBadge label={item.label === "Critical Alerts" ? "Critical" : item.label === "Active Alerts" ? "Active" : item.label === "Offline Labels" ? "Offline" : "Normal"} tone={item.tone === "rose" ? "critical" : item.tone === "amber" ? "warning" : item.tone === "emerald" ? "active" : "normal"} />}
+          />
         ))}
       </section>
 

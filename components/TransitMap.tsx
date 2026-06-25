@@ -8,6 +8,7 @@ import "leaflet/dist/leaflet.css";
 import AssetDetailPanel from "@/components/AssetDetailPanel";
 import MapRiskLegend from "@/components/MapRiskLegend";
 import TransitMapControls from "@/components/TransitMapControls";
+import Card from "@/components/ui/Card";
 import { riskColors, transitAssets, transitLanes, type TransitAsset } from "@/data/transitMapDemoData";
 
 const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false });
@@ -66,7 +67,7 @@ export default function TransitMap() {
       />
 
       <div className="grid gap-6 xl:grid-cols-[1.7fr_0.9fr]">
-        <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-slate-900/70 p-3 shadow-2xl shadow-black/20">
+        <Card className="p-3">
           <div className="h-[620px] w-full overflow-hidden rounded-[1.5rem]">
             <MapContainer center={[39.5, -98.35]} zoom={4} scrollWheelZoom className="h-full w-full">
               <TileLayer
@@ -92,7 +93,7 @@ export default function TransitMap() {
               ))}
             </MapContainer>
           </div>
-        </div>
+        </Card>
 
         <div className="space-y-6">
           <MapRiskLegend />

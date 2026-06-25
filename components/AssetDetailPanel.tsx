@@ -1,4 +1,7 @@
 import type { TransitAsset } from "@/data/transitMapDemoData";
+import Card from "@/components/ui/Card";
+import RiskBadge from "@/components/ui/RiskBadge";
+import StatusBadge from "@/components/ui/StatusBadge";
 
 type AssetDetailPanelProps = {
   asset: TransitAsset | null;
@@ -20,23 +23,13 @@ export default function AssetDetailPanel({ asset }: AssetDetailPanelProps) {
   }
 
   return (
-    <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 shadow-2xl shadow-black/20">
+    <Card title="Asset insight" description={asset.id} className="p-6">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm uppercase tracking-[0.3em] text-cyan-400">Asset insight</p>
+          <p className="text-sm uppercase tracking-[0.3em] text-cyan-400">Asset detail</p>
           <h3 className="mt-2 text-xl font-semibold text-white">{asset.id}</h3>
         </div>
-        <span
-          className={`rounded-full px-3 py-1 text-sm font-medium ${
-            asset.riskStatus === "Critical"
-              ? "bg-rose-500/15 text-rose-200"
-              : asset.riskStatus === "Warning"
-                ? "bg-amber-500/15 text-amber-200"
-                : "bg-cyan-500/15 text-cyan-200"
-          }`}
-        >
-          {asset.riskStatus}
-        </span>
+        <RiskBadge level={asset.riskStatus} />
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -119,6 +112,6 @@ export default function AssetDetailPanel({ asset }: AssetDetailPanelProps) {
           ))}
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
