@@ -295,3 +295,25 @@ export type SettingsData = {
   api: ApiAccessSettings;
   billing: BillingSettings;
 };
+
+export type DemoPresetName = "Pilot" | "Regional" | "Enterprise" | "National";
+
+export type DemoActionLog = {
+  id: string;
+  title: string;
+  detail: string;
+  timestamp: string;
+};
+
+export type DemoState = {
+  preset: DemoPresetName;
+  activeSmartLabels: number;
+  labelsReporting: number;
+  offlineLabels: number;
+  nodes: LogisticsNode[];
+  lanes: TransitLane[];
+  assets: LogisticsAsset[];
+  alerts: Alert[];
+  sensorEvents: SensorEvent[];
+  activityLog: DemoActionLog[];
+};

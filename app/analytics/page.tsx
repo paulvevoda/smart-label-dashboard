@@ -1,3 +1,5 @@
+"use client";
+
 import AppShell from "@/components/AppShell";
 import ActiveAlertsPanel from "@/components/ActiveAlertsPanel";
 import AlertTrendBreakdown from "@/components/AlertTrendBreakdown";
@@ -13,6 +15,7 @@ import SeverityBreakdown from "@/components/SeverityBreakdown";
 import ShipmentActivityAnalytics from "@/components/ShipmentActivityAnalytics";
 import ShipmentPerformanceAnalytics from "@/components/ShipmentPerformanceAnalytics";
 import PageHeader from "@/components/ui/PageHeader";
+import { useDemoState } from "@/context/DemoStateContext";
 import { mockData } from "@/data";
 import {
   getAlertCountsByType,
@@ -30,7 +33,8 @@ import {
 } from "@/data";
 
 export default function AnalyticsPage() {
-  const summary = getAnalyticsSummary();
+  const { state } = useDemoState();
+  const summary = { ...getAnalyticsSummary(), activeAlerts: state.alerts.filter((alert) => alert.status === "Active").length };
   const shipmentPerformance = getShipmentPerformanceBreakdown();
   const shipmentActivity = getShipmentActivityBreakdown();
   const alertTrends = getAlertCountsByType();
@@ -64,7 +68,7 @@ export default function AnalyticsPage() {
         <ResponseMetricsPanel metrics={responseMetrics} />
         <LossPreventionCard estimate={lossPrevention} />
         <AnalyticsInsightsPanel insights={insights} />
-        <ActiveAlertsPanel alerts={mockData.alerts} />
+        <ActiveAlertsPanel alerts={state.alerts} />
       </div>
     </AppShell>
   );

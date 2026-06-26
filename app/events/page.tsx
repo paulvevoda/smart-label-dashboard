@@ -6,7 +6,7 @@ import EventSummaryCards from "@/components/EventSummaryCards";
 import EventsControls from "@/components/EventsControls";
 import EventsTable from "@/components/EventsTable";
 import PageHeader from "@/components/ui/PageHeader";
-import { mockData } from "@/data";
+import { useDemoState } from "@/context/DemoStateContext";
 import type { AlertSeverity, AlertStatus, SensorEventType } from "@/data/types";
 
 type EventRow = {
@@ -25,13 +25,14 @@ type EventRow = {
 };
 
 export default function EventsPage() {
+  const { state } = useDemoState();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All Events");
   const [sortBy, setSortBy] = useState<"timestamp" | "severity" | "status" | "eventType" | "customer">("timestamp");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
   const combinedEvents = useMemo<EventRow[]>(() => {
-    const alerts: EventRow[] = mockData.alerts.map((alert) => ({
+    const alerts: EventRow[] = state.alerts.map((alert) => ({
       ...alert,
       eventType: alert.eventType,
       severity: alert.severity,
@@ -41,14 +42,14 @@ export default function EventsPage() {
       currentLocation: alert.currentLocation,
       recommendedAction: alert.recommendedAction,
     }));
-    const sensorEvents: EventRow[] = mockData.sensorEvents.map((event) => ({
+    const sensorEvents: EventRow[] = state.sensorEvents.map((event) => ({
       ...event,
       description: event.description,
       currentLocation: "Network monitoring",
       recommendedAction: event.description,
     }));
     return [...alerts, ...sensorEvents];
-  }, []);
+  }, [state.alerts, state.sensorEvents]);
 
   const filteredEvents = useMemo<EventRow[]>(() => {
     const normalizedSearch = search.toLowerCase();
@@ -120,11 +121,11 @@ export default function EventsPage() {
 
         <EventSummaryCards
           totalEvents={combinedEvents.length}
-          activeAlerts={mockData.alerts.filter((alert) => alert.status === "Active").length}
+          activeAlerts={state.alerts.filter((alert) => alert.status === "Active").length}
           criticalEvents={combinedEvents.filter((event) => event.severity === "Critical").length}
-          resolvedToday={mockData.alerts.filter((alert) => alert.status === "Resolved").length}
+          resolvedToday={state.alerts.filter((alert) => alert.status === "Resolved").length}
           batteryWarnings={combinedEvents.filter((event) => event.eventType === "Battery Warning").length}
-          offlineLabels={mockData.smartLabels.filter((label) => label.status === "Offline").length}
+          offlineLabels={state.offlineLabels}
         />
 
         <EventsControls

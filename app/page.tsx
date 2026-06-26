@@ -1,22 +1,39 @@
+"use client";
+
 import AppShell from "@/components/AppShell";
 import DonutPlaceholder from "@/components/DonutPlaceholder";
 import RecentActivityFeed from "@/components/RecentActivityFeed";
 import Card from "@/components/ui/Card";
 import KpiCard from "@/components/ui/KpiCard";
 import StatusBadge from "@/components/ui/StatusBadge";
-import { commandCenterSummary } from "@/data";
-
-const kpis = [
-  { label: "Labels Reporting", value: "94.2%", detail: "Across all monitored lanes", tone: "cyan" as const },
-  { label: "Offline Labels", value: "18", detail: "Requires field intervention", tone: "amber" as const },
-  { label: "Total Shipments", value: "2,184", detail: "Tracked in the network", tone: "emerald" as const },
-  { label: "In Transit", value: "436", detail: "Moving through active corridors", tone: "cyan" as const },
-  { label: "Active Alerts", value: "27", detail: "Needs operator review", tone: "rose" as const },
-  { label: "Critical Alerts", value: "5", detail: "Immediate response required", tone: "rose" as const },
-];
+import { useDemoState } from "@/context/DemoStateContext";
 
 export default function Home() {
-  const summary = commandCenterSummary;
+  const { state } = useDemoState();
+  const summary = {
+    activeSmartLabels: state.activeSmartLabels,
+    labelsReporting: state.labelsReporting,
+    offlineLabels: state.offlineLabels,
+    totalShipments: state.assets.length,
+    inTransit: state.assets.length,
+    activeAlerts: state.alerts.filter((alert) => alert.status === "Active").length,
+    criticalAlerts: state.alerts.filter((alert) => alert.severity === "Critical").length,
+    shipmentStatus: [
+      { label: "On Time", value: Math.max(1, state.assets.length - 2) },
+      { label: "Delayed", value: 1 },
+      { label: "At Risk", value: Math.max(0, state.alerts.filter((alert) => alert.severity === "Critical").length) },
+    ],
+    batteryHealth: [
+      { label: "Healthy", value: state.assets.filter((asset) => asset.riskStatus === "Normal").length },
+      { label: "Warning", value: state.assets.filter((asset) => asset.riskStatus === "Warning").length },
+      { label: "Critical", value: state.assets.filter((asset) => asset.riskStatus === "Critical").length },
+    ],
+    shipmentActivity: [
+      { label: "Active", value: state.assets.length },
+      { label: "Idle", value: 0 },
+      { label: "Expected Delivery Next 24 Hours", value: Math.max(0, state.lanes.length - 2) },
+    ],
+  };
   const kpiValues = [
     { label: "Labels Reporting", value: `${((summary.labelsReporting / summary.activeSmartLabels) * 100).toFixed(1)}%`, detail: "Across all monitored lanes", tone: "cyan" as const },
     { label: "Offline Labels", value: `${summary.offlineLabels}`, detail: "Requires field intervention", tone: "amber" as const },
