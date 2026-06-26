@@ -235,3 +235,63 @@ export type AnalyticsInsight = {
   title: string;
   description: string;
 };
+
+export type CompanySettings = {
+  companyName: string;
+  industry: string;
+  primaryContact: string;
+  operationsRegion: string;
+  defaultTimezone: string;
+  accountStatus: string;
+};
+
+export type NotificationRule = {
+  name: string;
+  description: string;
+  enabled: boolean;
+  deliveryMethod: string;
+};
+
+export type SensorThresholdSetting = {
+  label: string;
+  description: string;
+  value: string;
+};
+
+export type UserAccount = {
+  name: string;
+  role: string;
+  accessLevel: string;
+  status: string;
+};
+
+export type IntegrationSetting = {
+  name: string;
+  description: string;
+  status: "Connected" | "Available" | "Planned";
+};
+
+export type ApiAccessSettings = {
+  status: string;
+  apiKey: string;
+  webhookEndpoint: string;
+  eventStream: string;
+};
+
+export type BillingSettings = {
+  planName: string;
+  activeLabels: number;
+  billingModel: string;
+  usageTier: string;
+  nextInvoice: string;
+};
+
+export type SettingsData = {
+  company: CompanySettings;
+  notificationRules: NotificationRule[];
+  sensorThresholds: SensorThresholdSetting[];
+  users: UserAccount[];
+  integrations: IntegrationSetting[];
+  api: ApiAccessSettings;
+  billing: BillingSettings;
+};

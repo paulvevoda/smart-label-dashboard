@@ -1,12 +1,20 @@
 import type {
   Alert,
+  BillingSettings,
   CommandCenterSummary,
+  CompanySettings,
+  IntegrationSetting,
   LogisticsAsset,
   LogisticsNode,
+  NotificationRule,
   SensorEvent,
+  SensorThresholdSetting,
   Shipment,
   SmartLabel,
   TransitLane,
+  UserAccount,
+  ApiAccessSettings,
+  SettingsData,
 } from "./types";
 
 const smartLabels: SmartLabel[] = [
@@ -317,6 +325,69 @@ const shipments: Shipment[] = [
   { id: "SHP-1009", customer: "Apex Retail", origin: "Miami", destination: "Orlando Fulfillment", status: "Delayed", activity: "Expected Delivery Next 24 Hours", assignedLabels: 119, assignedAsset: "PT-MIA-11", eta: "1h 20m", currentLocation: "Miami", recentEvents: ["Label Offline", "Shipment Arrived"] },
 ];
 
+const companySettings: CompanySettings = {
+  companyName: "Northstar Cold Chain Logistics",
+  industry: "Food & Pharmaceutical Logistics",
+  primaryContact: "Mina Alvarez",
+  operationsRegion: "United States",
+  defaultTimezone: "America/New_York",
+  accountStatus: "Active Demo Account",
+};
+
+const notificationRules: NotificationRule[] = [
+  { name: "Critical alerts", description: "Escalate high-severity exceptions to operations leadership", enabled: true, deliveryMethod: "Email + SMS" },
+  { name: "Temperature excursions", description: "Notify cold-chain stewards when threshold drift is detected", enabled: true, deliveryMethod: "Dashboard + Email" },
+  { name: "Shock events", description: "Alert handlers when handling anomalies exceed configured limits", enabled: true, deliveryMethod: "Dashboard" },
+  { name: "Humidity excursions", description: "Trigger review for moisture-sensitive freight", enabled: false, deliveryMethod: "Email" },
+  { name: "Light exposure", description: "Flag prolonged light exposure for sensitive cargo", enabled: true, deliveryMethod: "Dashboard" },
+  { name: "Tamper / open events", description: "Route tamper and seal-open events to security operations", enabled: true, deliveryMethod: "Webhook" },
+  { name: "Battery warnings", description: "Notify maintenance teams before battery thresholds become critical", enabled: true, deliveryMethod: "Dashboard" },
+  { name: "Label offline events", description: "Escalate disconnected labels to the field operations team", enabled: true, deliveryMethod: "Email + Dashboard" },
+];
+
+const sensorThresholds: SensorThresholdSetting[] = [
+  { label: "Temperature min", description: "Minimum acceptable refrigerated range", value: "2°C" },
+  { label: "Temperature max", description: "Maximum acceptable refrigerated range", value: "8°C" },
+  { label: "Humidity max", description: "Maximum acceptable relative humidity", value: "65%" },
+  { label: "Shock threshold", description: "Threshold for impact or handling anomalies", value: "5g" },
+  { label: "Light exposure alert", description: "Threshold for prolonged light exposure", value: "4 hrs" },
+  { label: "Tamper / open detection", description: "Seal-open or tamper detection sensitivity", value: "Immediate" },
+  { label: "Battery warning threshold", description: "Warning threshold before replacement need", value: "<30%" },
+  { label: "Battery critical threshold", description: "Critical threshold for replacement urgency", value: "<10%" },
+];
+
+const demoUsers: UserAccount[] = [
+  { name: "Alicia Chen", role: "Operations Admin", accessLevel: "Admin", status: "Active" },
+  { name: "Marcus Bell", role: "Logistics Manager", accessLevel: "Manager", status: "Active" },
+  { name: "Sofia Patel", role: "Customer Viewer", accessLevel: "Viewer", status: "Active" },
+  { name: "Darius Kim", role: "Support Analyst", accessLevel: "Analyst", status: "Pending" },
+];
+
+const integrations: IntegrationSetting[] = [
+  { name: "TMS Integration", description: "Connection point for transportation management systems", status: "Connected" },
+  { name: "ERP Integration", description: "Enterprise resource planning data sync", status: "Available" },
+  { name: "Carrier API", description: "Carrier telemetry and shipment status updates", status: "Connected" },
+  { name: "Webhook Events", description: "Outbound event routing for downstream systems", status: "Connected" },
+  { name: "AWS IoT Core", description: "Future-ready ingestion for device telemetry", status: "Planned" },
+  { name: "Supabase", description: "Secure storage and event backup", status: "Available" },
+  { name: "CSV Export", description: "Bulk export for reporting and operations review", status: "Connected" },
+];
+
+const apiSettings: ApiAccessSettings = {
+  status: "Enabled",
+  apiKey: "sk_demo_••••••••••••••••",
+  webhookEndpoint: "https://demo.smartlabel.io/webhooks/ops",
+  eventStream: "shipments.events.v1",
+};
+
+const billingSettings: BillingSettings = {
+  planName: "Enterprise Pilot",
+  activeLabels: 12486,
+  billingModel: "Annual SaaS + label hardware",
+  usageTier: "10,000–25,000 labels",
+  nextInvoice: "2026-07-15 · Simulated invoice preview",
+};
+
 const alerts: Alert[] = [
   { id: "AL-001", timestamp: "2 min ago", labelId: "LBL-2048", shipmentId: "SHP-1001", assetId: "DC-LA-01", customer: "Apex Retail", eventType: "Temperature Alert", severity: "Warning", status: "Active", currentLocation: "Los Angeles", recommendedAction: "Inspect cold-chain compliance" },
   { id: "AL-002", timestamp: "8 min ago", labelId: "LBL-3184", shipmentId: "SHP-1002", assetId: "TR-SEA-12", customer: "BluePeak Foods", eventType: "Humidity Alert", severity: "Normal", status: "Active", currentLocation: "Seattle", recommendedAction: "Confirm environmental controls" },
@@ -339,7 +410,18 @@ export const mockData = {
   shipments,
   alerts,
   sensorEvents,
+  settings: {
+    company: companySettings,
+    notificationRules,
+    sensorThresholds,
+    users: demoUsers,
+    integrations,
+    api: apiSettings,
+    billing: billingSettings,
+  },
 };
+
+export const settingsData: SettingsData = mockData.settings;
 
 export const commandCenterSummary: CommandCenterSummary = {
   activeSmartLabels: smartLabels.length,
