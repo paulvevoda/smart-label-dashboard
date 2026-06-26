@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type KeyboardEvent } from "react";
 import Card from "@/components/ui/Card";
 import EmptyState from "@/components/ui/EmptyState";
 import RiskBadge from "@/components/ui/RiskBadge";
@@ -35,8 +35,19 @@ export default function EventsTable({ events, filters }: EventsTableProps) {
   const rows = useMemo(() => events, [events]);
 
   if (rows.length === 0) {
-    return <EmptyState title="No events match the current filters" description="Try clearing the search or switching to a broader filter." />;
+    return <EmptyState title="No events match the current filters" description="Try widening the search, switching to a broader filter, or clearing the active selection to resume the walkthrough." />;
   }
+
+  const toggleExpanded = (eventId: string) => {
+    setExpandedEventId((current) => (current === eventId ? null : eventId));
+  };
+
+  const handleRowKeyDown = (event: KeyboardEvent<HTMLTableRowElement>, eventId: string) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      toggleExpanded(eventId);
+    }
+  };
 
   return (
     <Card title="Event timeline" description="Recent sensor and alert activity across the Smart Label network">
@@ -48,8 +59,8 @@ export default function EventsTable({ events, filters }: EventsTableProps) {
             const statusTone = event.status === "Active" ? "active" : "resolved";
 
             return (
-              <>
-                <tr key={event.id} className="cursor-pointer transition hover:bg-white/5" onClick={() => setExpandedEventId(isExpanded ? null : event.id)}>
+              <div key={event.id} className="contents">
+                <tr className="cursor-pointer transition hover:bg-white/5" onClick={() => toggleExpanded(event.id)} onKeyDown={(rowEvent) => handleRowKeyDown(rowEvent, event.id)} tabIndex={0} aria-expanded={isExpanded} aria-controls={`event-detail-${event.id}`}>
                   <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-300">{event.timestamp}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-200">{toEventTypeLabel(event)}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-200">
@@ -72,7 +83,7 @@ export default function EventsTable({ events, filters }: EventsTableProps) {
                   </td>
                 </tr>
                 {isExpanded && (
-                  <tr className="bg-slate-950/80">
+                  <tr id={`event-detail-${event.id}`} className="bg-slate-950/80">
                     <td colSpan={10} className="px-4 py-4">
                       <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
                         <p className="text-sm font-semibold text-white">Event detail</p>
@@ -98,7 +109,7 @@ export default function EventsTable({ events, filters }: EventsTableProps) {
                     </td>
                   </tr>
                 )}
-              </>
+              </div>
             );
           })}
         </TableShell>

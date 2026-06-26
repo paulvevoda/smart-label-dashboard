@@ -16,7 +16,7 @@ export default function Card({
   className = "",
 }: CardProps) {
   return (
-    <section className={`rounded-[1.5rem] border border-white/10 bg-slate-900/70 p-6 shadow-2xl shadow-black/20 backdrop-blur ${className}`.trim()}>
+    <section className={`rounded-[1.5rem] border border-white/10 bg-slate-900/70 p-6 shadow-2xl shadow-black/20 backdrop-blur transition-colors duration-200 ${className}`.trim()}>
       {(title || description || actions) && (
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>

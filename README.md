@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Smart Label Command Center
 
-## Getting Started
+Smart Label Command Center is an investor-ready Next.js demo for a simulated logistics intelligence platform. It combines a polished dark enterprise UI with mock logistics data, live demo-state controls, and operational screens for transit monitoring, events, analytics, settings, and shipment drill-downs.
 
-First, run the development server:
+## Overview
+
+This MVP is designed for investor demos, screenshots, and Vercel deployment. It is intentionally mock-driven and does not connect to real IoT devices, GPS feeds, billing systems, or external APIs.
+
+## Current MVP scope
+
+- Command Center overview
+- Transit map with Leaflet/OpenStreetMap
+- Operational events and exception feed
+- Shipment detail drill-downs
+- Executive analytics and loss-prevention framing
+- SaaS-style settings area
+- Investor demo control panel with scenario presets and simulated alerts
+
+## Tech stack
+
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS
+- Leaflet + react-leaflet
+
+## Run locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000 to view the app.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Build
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+```
 
-## Learn More
+## Main routes
 
-To learn more about Next.js, take a look at the following resources:
+- /
+- /transit-map
+- /events
+- /shipments
+- /shipments/[shipmentId]
+- /analytics
+- /settings
+- /demo-control
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Notes
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- All data is simulated for demo purposes.
+- The map uses Leaflet with OpenStreetMap tiles and does not require a paid provider key.
+- Demo-state updates flow across the core investor workspace where the existing controls are wired.
 
-## Deploy on Vercel
+## Module status
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Completed modules include:
+- Command Center
+- Transit Map
+- Design System
+- Mock Data Engine
+- Events
+- Shipment Detail
+- Analytics
+- Settings
+- Investor Demo Control Panel
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Future roadmap
+
+- Supabase backend
+- Real authentication
+- AWS IoT Core telemetry ingestion
+- Hardware device ingestion
+- Customer accounts
+- TMS/ERP integrations
+- Real-time alerting
+- Production analytics
+- Billing/subscription management

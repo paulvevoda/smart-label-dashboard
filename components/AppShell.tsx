@@ -8,6 +8,7 @@ const navItems = [
   { href: "/", label: "Command Center" },
   { href: "/transit-map", label: "Transit Map" },
   { href: "/events", label: "Events" },
+  { href: "/shipments", label: "Shipments" },
   { href: "/analytics", label: "Analytics" },
   { href: "/settings", label: "Settings" },
   { href: "/demo-control", label: "Investor Demo Control Panel" },
@@ -27,7 +28,7 @@ export default function AppShell({
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.16),_transparent_32%),linear-gradient(135deg,_#020617_0%,_#0f172a_100%)] text-slate-100">
       <div className="mx-auto flex min-h-screen max-w-7xl flex-col lg:flex-row">
-        <aside className="w-full border-b border-white/10 bg-slate-950/80 p-6 backdrop-blur lg:w-72 lg:border-b-0 lg:border-r">
+        <aside className="w-full border-b border-white/10 bg-slate-950/80 p-6 backdrop-blur lg:sticky lg:top-0 lg:h-screen lg:w-72 lg:border-b-0 lg:border-r">
           <div className="mb-8">
             <p className="text-[0.65rem] font-semibold uppercase tracking-[0.35em] text-cyan-400">
               Smart Label

@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Smart Label Investor MVP",
-  description: "An investor-facing logistics intelligence command center for Smart Label monitoring.",
+  title: "Smart Label Command Center",
+  description: "An investor-ready logistics intelligence command center for Smart Label monitoring.",
 };
 
 export default function RootLayout({

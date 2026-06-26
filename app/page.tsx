@@ -42,6 +42,9 @@ export default function Home() {
     { label: "Active Alerts", value: `${summary.activeAlerts}`, detail: "Needs operator review", tone: "rose" as const },
     { label: "Critical Alerts", value: `${summary.criticalAlerts}`, detail: "Immediate response required", tone: "rose" as const },
   ];
+  const networkMessage = summary.activeAlerts === 0
+    ? "The network is operating within expected tolerances and is ready for a clean investor walkthrough."
+    : `The network is currently managing ${summary.activeAlerts} active exception${summary.activeAlerts === 1 ? "" : "s"} across critical lanes.`;
 
   return (
     <AppShell
@@ -53,9 +56,10 @@ export default function Home() {
           <div>
             <p className="text-sm uppercase tracking-[0.35em] text-cyan-400">Global network pulse</p>
             <h3 className="mt-3 text-3xl font-semibold text-white">Active Smart Labels</h3>
-            <p className="mt-3 max-w-2xl text-sm text-slate-400">
-              The network is currently monitoring 18,492 intelligent labels with strong coverage across priority lanes and high-value shipments.
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
+              {summary.activeSmartLabels.toLocaleString()} intelligent labels are currently monitored across the demo network, with strong coverage over priority lanes and high-value shipments.
             </p>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">{networkMessage}</p>
           </div>
           <div className="rounded-2xl border border-cyan-400/20 bg-cyan-500/10 px-6 py-4 text-right">
             <p className="text-sm text-cyan-200">Network health</p>
