@@ -36,7 +36,7 @@ type RouteProfile = {
   laneId: string;
   waypoints: RouteWaypoint[];
 };
-type VehicleMode = "truck" | "rail";
+type VehicleMode = "truck" | "rail" | "ocean";
 
 const SEATTLE_CHICAGO_ASSET_ID = "TR-SEA-CHI-90";
 const CHICAGO_ATLANTA_ASSET_ID = "TR-CHI-ATL-65";
@@ -45,6 +45,7 @@ const CHICAGO_NEWARK_ASSET_ID = "TR-CHI-EWR-80";
 const NYC_NEWARK_ASSET_ID = "TR-NYC-EWR-95";
 const NYC_BOSTON_ASSET_ID = "TR-NYC-BOS-95";
 const LOS_ANGELES_ATLANTA_RAIL_ASSET_ID = "RC-LA-ATL-40";
+const LOS_ANGELES_SHANGHAI_OCEAN_ASSET_ID = "CT-LA-SHA-88";
 
 const controlledRouteIdByAssetId: Record<string, string> = {
   "TR-SEA-12": "seattle-boise",
@@ -55,9 +56,11 @@ const controlledRouteIdByAssetId: Record<string, string> = {
   [NYC_NEWARK_ASSET_ID]: "nyc-newark",
   [NYC_BOSTON_ASSET_ID]: "nyc-boston",
   [LOS_ANGELES_ATLANTA_RAIL_ASSET_ID]: "los-angeles-atlanta-rail",
+  [LOS_ANGELES_SHANGHAI_OCEAN_ASSET_ID]: "los-angeles-shanghai-ocean",
 };
 
 const railLaneIds = new Set(["los-angeles-atlanta-rail"]);
+const oceanLaneIds = new Set(["los-angeles-shanghai-ocean"]);
 
 const isDisabledLocalLaneAsset = (asset: LogisticsAsset) => {
   const originText = `${asset.location.city}, ${asset.location.state}`.toLowerCase();
@@ -232,6 +235,26 @@ const losAngelesToAtlantaRailDemoAsset: LogisticsAsset = {
   labelId: "LBL-4040",
 };
 
+const losAngelesToShanghaiOceanDemoAsset: LogisticsAsset = {
+  id: LOS_ANGELES_SHANGHAI_OCEAN_ASSET_ID,
+  assetType: "Container",
+  carrier: "Pacific Meridian Lines",
+  customer: "BluePeak Foods",
+  location: { city: "Los Angeles", state: "CA", coordinates: [33.7405, -118.2775] },
+  destination: "Shanghai, China",
+  eta: "52h 30m",
+  labelsPresent: 132,
+  labelsActive: 115,
+  labelsIdle: 10,
+  labelsOffline: 7,
+  negativeAlerts24h: 4,
+  negativeAlertRate: 0.0303,
+  riskStatus: "Warning",
+  battery: { healthy: 71, warning: 19, critical: 10 },
+  recentEvents: ["Temperature Alert", "Shipment Departed"],
+  labelId: "LBL-5888",
+};
+
 const seattleToBoiseRoute: RouteWaypoint[] = [
   { name: "Seattle, WA", coordinate: [47.6062, -122.3321], nodeType: "Origin" },
   { name: "Snoqualmie Pass, WA", coordinate: [47.3923, -121.4001] },
@@ -359,7 +382,21 @@ const losAngelesToAtlantaRailRoute: RouteWaypoint[] = [
   { name: "Atlanta, GA", coordinate: [33.749, -84.388], nodeType: "Destination" },
 ];
 
-const truckRoutesByLaneId: Record<string, RouteWaypoint[]> = {
+const losAngelesToShanghaiOceanRoute: RouteWaypoint[] = [
+  { name: "Port of Los Angeles, CA", coordinate: [33.7405, -118.2775], nodeType: "Origin" },
+  { name: "San Pedro Bay, CA", coordinate: [33.65, -118.25] },
+  { name: "Pacific Departure Lane", coordinate: [32.8, -120.8] },
+  { name: "Eastern North Pacific", coordinate: [34.5, -135] },
+  { name: "Central North Pacific", coordinate: [37, -155] },
+  { name: "Mid-Pacific Shipping Lane", coordinate: [38.5, -175], nodeType: "Hub" },
+  { name: "Western North Pacific", coordinate: [38, 165] },
+  { name: "Japan Offshore Approach", coordinate: [35.5, 145] },
+  { name: "East China Sea Approach", coordinate: [31.5, 128] },
+  { name: "Yangshan Port, China", coordinate: [30.6267, 122.0667] },
+  { name: "Shanghai, China", coordinate: [31.2304, 121.4737], nodeType: "Destination" },
+];
+
+const controlledRoutesByLaneId: Record<string, RouteWaypoint[]> = {
   "seattle-boise": seattleToBoiseRoute,
   "seattle-chicago": seattleToChicagoRoute,
   "chicago-atlanta": chicagoToAtlantaRoute,
@@ -368,6 +405,7 @@ const truckRoutesByLaneId: Record<string, RouteWaypoint[]> = {
   "nyc-newark": nycToNewarkRoute,
   "nyc-boston": nycToBostonRoute,
   "los-angeles-atlanta-rail": losAngelesToAtlantaRailRoute,
+  "los-angeles-shanghai-ocean": losAngelesToShanghaiOceanRoute,
 };
 
 const DESTINATION_COORDINATES: Record<string, Coordinate> = {
@@ -385,20 +423,25 @@ const DESTINATION_COORDINATES: Record<string, Coordinate> = {
   "Reno, NV": [39.5296, -119.8138],
   "Boston, MA": [42.3601, -71.0589],
   "Orlando Fulfillment": [28.5383, -81.3792],
+  "Shanghai, China": [31.2304, 121.4737],
 };
 
 const getRouteStyle = (riskStatus: LogisticsAsset["riskStatus"], hasIssue: boolean, mode: VehicleMode) => {
-  const railDash = mode === "rail" ? "11 6" : "";
+  const modeDash = mode === "rail"
+    ? "11 6"
+    : mode === "ocean"
+      ? "14 8"
+      : "";
 
   if (riskStatus === "Critical" || hasIssue) {
-    return { color: "#fb7185", weight: 4, opacity: 0.95, dashArray: railDash };
+    return { color: "#fb7185", weight: 4, opacity: 0.95, dashArray: modeDash };
   }
 
   if (riskStatus === "Warning") {
-    return { color: "#f59e0b", weight: 3.2, opacity: 0.8, dashArray: mode === "rail" ? "11 6" : "8 6" };
+    return { color: "#f59e0b", weight: 3.2, opacity: 0.8, dashArray: mode === "truck" ? "8 6" : modeDash };
   }
 
-  return { color: "#38bdf8", weight: 3, opacity: 0.75, dashArray: railDash };
+  return { color: "#38bdf8", weight: 3, opacity: 0.75, dashArray: modeDash };
 };
 
 const getLaneStyle = (riskStatus: LogisticsAsset["riskStatus"]) => {
@@ -476,7 +519,11 @@ const getVehicleIcon = (asset: LogisticsAsset, isSelected: boolean, mode: Vehicl
     ? `<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false" style="display:block;fill:#020617;">
         <path d="M5 4h14c1.1 0 2 .9 2 2v7c0 1.3-.8 2.5-2 3l1.5 2v1h-2.4l-1.6-2h-9.1l-1.6 2H3.4v-1L5 16c-1.2-.5-2-1.7-2-3V6c0-1.1.9-2 2-2zm0 4v3h14V8H5zm3 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm8 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
       </svg>`
-    : `<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false" style="display:block;fill:#020617;">
+    : mode === "ocean"
+      ? `<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false" style="display:block;fill:#020617;">
+        <path d="M3 15.8h18c0 2.6-2.2 4.2-4.4 4.2-1.2 0-2.2-.4-3.1-1.2-.9.8-2 1.2-3.2 1.2-1.2 0-2.3-.4-3.2-1.2-.9.8-1.9 1.2-3.1 1.2C5.2 20 3 18.4 3 15.8zm3.1-1.6L7.8 8h8.4l1.7 6.2H6.1zM10 5h4.4c.7 0 1.3.6 1.3 1.3V7H8.7V6.3C8.7 5.6 9.3 5 10 5z"/>
+      </svg>`
+      : `<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false" style="display:block;fill:#020617;">
         <path d="M3 7h11v7h1.6c.7 0 1.3.3 1.7.8l2.7 3.2V21h-1.8a2.7 2.7 0 0 1-5.4 0H9.2a2.7 2.7 0 0 1-5.4 0H2v-3h1V7zm12 2v5h4.2l-2-2.4c-.2-.4-.6-.6-1-.6H15zM6.5 20a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4zm9 0a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4z"/>
       </svg>`;
 
@@ -519,7 +566,7 @@ const resolveDestinationCoordinate = (asset: LogisticsAsset, nodes: LogisticsNod
 };
 
 const getRouteLaneIdForAsset = (asset: LogisticsAsset) => {
-  // Controlled truck route lookup: asset.id -> truckRoutesByLaneId[routeId]
+  // Controlled route lookup: asset.id -> controlledRoutesByLaneId[routeId]
   const explicitRouteId = controlledRouteIdByAssetId[asset.id];
   if (explicitRouteId) return explicitRouteId;
 
@@ -539,10 +586,10 @@ const getRouteLaneIdForAsset = (asset: LogisticsAsset) => {
 
 const getRouteProfileForAsset = (asset: LogisticsAsset, nodes: LogisticsNode[]): RouteProfile => {
   const routeLaneId = getRouteLaneIdForAsset(asset);
-  if (routeLaneId && truckRoutesByLaneId[routeLaneId]) {
+  if (routeLaneId && controlledRoutesByLaneId[routeLaneId]) {
     return {
       laneId: routeLaneId,
-      waypoints: truckRoutesByLaneId[routeLaneId],
+      waypoints: controlledRoutesByLaneId[routeLaneId],
     };
   }
 
@@ -662,7 +709,11 @@ export default function TransitMap() {
       ? withNycBoston
       : [...withNycBoston, losAngelesToAtlantaRailDemoAsset];
 
-    return withLosAngelesAtlantaRail;
+    const withLosAngelesShanghaiOcean = withLosAngelesAtlantaRail.some((asset) => asset.id === LOS_ANGELES_SHANGHAI_OCEAN_ASSET_ID)
+      ? withLosAngelesAtlantaRail
+      : [...withLosAngelesAtlantaRail, losAngelesToShanghaiOceanDemoAsset];
+
+    return withLosAngelesShanghaiOcean;
   }, [state.assets]);
 
   const filteredAssets = useMemo(() => {
@@ -698,7 +749,11 @@ export default function TransitMap() {
     return {
       asset,
       laneId: routeProfile.laneId,
-      mode: railLaneIds.has(routeProfile.laneId) ? "rail" as const : "truck" as const,
+      mode: railLaneIds.has(routeProfile.laneId)
+        ? "rail" as const
+        : oceanLaneIds.has(routeProfile.laneId)
+          ? "ocean" as const
+          : "truck" as const,
       routeWaypoints: routeProfile.waypoints,
       waypoints,
       progress,
