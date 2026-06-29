@@ -39,11 +39,13 @@ type RouteProfile = {
 
 const SEATTLE_CHICAGO_ASSET_ID = "TR-SEA-CHI-90";
 const CHICAGO_ATLANTA_ASSET_ID = "TR-CHI-ATL-65";
+const SEATTLE_RENO_ASSET_ID = "TR-SEA-RNO-395";
 
 const controlledRouteIdByAssetId: Record<string, string> = {
   "TR-SEA-12": "seattle-boise",
   [SEATTLE_CHICAGO_ASSET_ID]: "seattle-chicago",
   [CHICAGO_ATLANTA_ASSET_ID]: "chicago-atlanta",
+  [SEATTLE_RENO_ASSET_ID]: "seattle-reno",
 };
 
 const isDisabledLocalLaneAsset = (asset: LogisticsAsset) => {
@@ -118,6 +120,26 @@ const chicagoToAtlantaDemoAsset: LogisticsAsset = {
   labelId: "LBL-9165",
 };
 
+const seattleToRenoDemoAsset: LogisticsAsset = {
+  id: SEATTLE_RENO_ASSET_ID,
+  assetType: "Truck",
+  carrier: "Summit Express",
+  customer: "Northwind Pharma",
+  location: { city: "Seattle", state: "WA", coordinates: [47.6062, -122.3321] },
+  destination: "Reno, NV",
+  eta: "14h 05m",
+  labelsPresent: 58,
+  labelsActive: 52,
+  labelsIdle: 4,
+  labelsOffline: 2,
+  negativeAlerts24h: 1,
+  negativeAlertRate: 0.0172,
+  riskStatus: "Normal",
+  battery: { healthy: 79, warning: 15, critical: 6 },
+  recentEvents: ["Shipment Departed"],
+  labelId: "LBL-9395",
+};
+
 const seattleToBoiseRoute: RouteWaypoint[] = [
   { name: "Seattle, WA", coordinate: [47.6062, -122.3321], nodeType: "Origin" },
   { name: "Snoqualmie Pass, WA", coordinate: [47.3923, -121.4001] },
@@ -168,10 +190,28 @@ const chicagoToAtlantaRoute: RouteWaypoint[] = [
   { name: "Atlanta, GA", coordinate: [33.749, -84.388], nodeType: "Destination" },
 ];
 
+const seattleToRenoRoute: RouteWaypoint[] = [
+  { name: "Seattle, WA", coordinate: [47.6062, -122.3321], nodeType: "Origin" },
+  { name: "Tacoma, WA", coordinate: [47.2529, -122.4443] },
+  { name: "Portland, OR", coordinate: [45.5152, -122.6784], nodeType: "Hub" },
+  { name: "Salem, OR", coordinate: [44.9429, -123.0351] },
+  { name: "Eugene, OR", coordinate: [44.0521, -123.0868] },
+  { name: "Roseburg, OR", coordinate: [43.2165, -123.3417] },
+  { name: "Medford, OR", coordinate: [42.3265, -122.8756], nodeType: "Hub" },
+  { name: "Ashland, OR", coordinate: [42.1946, -122.7095] },
+  { name: "Weed, CA", coordinate: [41.4226, -122.3861] },
+  { name: "Mount Shasta, CA", coordinate: [41.3099, -122.3106] },
+  { name: "Burney, CA", coordinate: [40.8824, -121.6608] },
+  { name: "Susanville, CA", coordinate: [40.4163, -120.653] },
+  { name: "Hallelujah Junction, CA", coordinate: [39.7774, -120.0388] },
+  { name: "Reno, NV", coordinate: [39.5296, -119.8138], nodeType: "Destination" },
+];
+
 const truckRoutesByLaneId: Record<string, RouteWaypoint[]> = {
   "seattle-boise": seattleToBoiseRoute,
   "seattle-chicago": seattleToChicagoRoute,
   "chicago-atlanta": chicagoToAtlantaRoute,
+  "seattle-reno": seattleToRenoRoute,
 };
 
 const DESTINATION_COORDINATES: Record<string, Coordinate> = {
@@ -184,6 +224,7 @@ const DESTINATION_COORDINATES: Record<string, Coordinate> = {
   "Boston Market": [42.3601, -71.0589],
   "Chicago, IL": [41.8781, -87.6298],
   "Atlanta, GA": [33.749, -84.388],
+  "Reno, NV": [39.5296, -119.8138],
   "Orlando Fulfillment": [28.5383, -81.3792],
 };
 
@@ -429,9 +470,15 @@ export default function TransitMap() {
       ? baseAssets
       : [...baseAssets, seattleToChicagoDemoAsset];
 
-    return withSeattleChicago.some((asset) => asset.id === CHICAGO_ATLANTA_ASSET_ID)
+    const withChicagoAtlanta = withSeattleChicago.some((asset) => asset.id === CHICAGO_ATLANTA_ASSET_ID)
       ? withSeattleChicago
       : [...withSeattleChicago, chicagoToAtlantaDemoAsset];
+
+    const withSeattleReno = withChicagoAtlanta.some((asset) => asset.id === SEATTLE_RENO_ASSET_ID)
+      ? withChicagoAtlanta
+      : [...withChicagoAtlanta, seattleToRenoDemoAsset];
+
+    return withSeattleReno;
   }, [state.assets]);
 
   const filteredAssets = useMemo(() => {
