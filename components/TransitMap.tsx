@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { divIcon } from "leaflet";
 import { useEffect, useMemo, useState } from "react";
+import { useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
 import AssetDetailPanel from "@/components/AssetDetailPanel";
@@ -31,6 +32,7 @@ type RouteMilestone = {
   label: string;
   type: RouteNodeType;
   shipments: string[];
+  laneId: string;
 };
 type RouteProfile = {
   laneId: string;
@@ -654,6 +656,7 @@ const getShipmentRouteStyle = (status: TransitShipmentStatus, mode: VehicleMode,
       opacity: 0.33,
       dashArray: getModeDashPattern(mode),
       lineCap: getModeLineCap(mode),
+      className: "cursor-pointer",
     };
   }
 
@@ -671,6 +674,7 @@ const getShipmentRouteStyle = (status: TransitShipmentStatus, mode: VehicleMode,
     opacity: 0.95,
     dashArray: getModeDashPattern(mode),
     lineCap: getModeLineCap(mode),
+    className: "cursor-pointer",
   };
 };
 
@@ -681,6 +685,7 @@ const getCompletedSegmentStyle = (mode: VehicleMode) => {
     opacity: 0.88,
     dashArray: getModeDashPattern(mode),
     lineCap: getModeLineCap(mode),
+    className: "cursor-pointer",
   };
 };
 
@@ -690,16 +695,27 @@ const getLaneStyle = (riskStatus: LogisticsAsset["riskStatus"]) => {
   return { color: "#94a3b8", weight: 1.8, opacity: 0.3, dashArray: "6 8" };
 };
 
-const getRouteNodeIcon = (type: RouteNodeType) => {
+function MapBackgroundClickHandler({ onBackgroundClick }: { onBackgroundClick: () => void }) {
+  useMapEvents({
+    click: () => onBackgroundClick(),
+  });
+
+  return null;
+}
+
+const getRouteNodeIcon = (type: RouteNodeType, isSelectedShipmentNode: boolean) => {
   const styleByType: Record<RouteNodeType, { bg: string; border: string }> = {
-    Origin: { bg: "#22d3ee", border: "rgba(34,211,238,0.35)" },
-    Destination: { bg: "#34d399", border: "rgba(52,211,153,0.35)" },
+    Origin: { bg: "#22d3ee", border: "rgba(34,211,238,0.4)" },
+    Destination: {
+      bg: isSelectedShipmentNode ? "#94a3b8" : "#64748b",
+      border: isSelectedShipmentNode ? "rgba(203,213,225,0.48)" : "rgba(148,163,184,0.38)",
+    },
     Hub: { bg: "#a78bfa", border: "rgba(167,139,250,0.35)" },
   };
   const style = styleByType[type];
 
   return divIcon({
-    html: `<div style="display:flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:9999px;border:2px solid ${style.border};background:${style.bg};box-shadow:0 0 0 3px rgba(2,6,23,0.55);"></div>`,
+    html: `<div style="display:flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:9999px;border:2px solid ${style.border};background:${style.bg};box-shadow:0 0 0 3px rgba(2,6,23,0.55);cursor:pointer;"></div>`,
     className: "border-0 bg-transparent",
     iconSize: [14, 14],
     iconAnchor: [7, 7],
@@ -785,7 +801,7 @@ const getVehicleIcon = (
 
   return divIcon({
     html: `
-      <div style="position:relative;display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:9999px;border:2px solid ${isDimmed ? "rgba(148,163,184,0.65)" : "rgba(255,255,255,0.95)"};background:${color};box-shadow:${isSelected ? "0 0 0 7px rgba(34,211,238,0.26)" : "0 0 0 4px rgba(2,6,23,0.42)"};opacity:${isDimmed ? 0.72 : 1};">
+      <div style="position:relative;display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:9999px;border:2px solid ${isDimmed ? "rgba(148,163,184,0.65)" : "rgba(255,255,255,0.95)"};background:${color};box-shadow:${isSelected ? "0 0 0 7px rgba(34,211,238,0.26)" : "0 0 0 4px rgba(2,6,23,0.42)"};opacity:${isDimmed ? 0.72 : 1};cursor:pointer;">
         ${glyph}
         ${hasExceptionBadge ? `<span style="position:absolute;right:-7px;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:9999px;border:2px solid rgba(255,255,255,0.95);background:${badgeColor};color:#020617;font-size:10px;font-weight:800;line-height:1;">${symbol}</span>` : ""}
       </div>
@@ -1184,14 +1200,13 @@ export default function TransitMap({ initialSelectedAssetId }: TransitMapProps) 
   const hasSelectedShipment = selectedSnapshot !== null;
 
   const routeMilestones = useMemo(() => {
-    if (!selectedSnapshot) return [];
-
     const milestoneMap = new Map<string, RouteMilestone>();
-    const routeScope = [selectedSnapshot];
+    const routeScope = selectedSnapshot ? [selectedSnapshot] : routeSnapshots;
 
     routeScope.forEach(({ asset, laneId, routeWaypoints }) => {
       routeWaypoints.forEach((waypoint, index) => {
         if (!waypoint.nodeType) return;
+        if (!selectedSnapshot && waypoint.nodeType === "Hub") return;
         const coordinate = waypoint.coordinate;
         const roundedKey = `${coordinate[0].toFixed(2)}:${coordinate[1].toFixed(2)}`;
         const key = `${laneId}:${roundedKey}:${waypoint.nodeType}:${index}`;
@@ -1209,6 +1224,7 @@ export default function TransitMap({ initialSelectedAssetId }: TransitMapProps) 
           label: waypoint.name,
           type: waypoint.nodeType,
           shipments: [asset.id],
+          laneId,
         });
       });
     });
@@ -1231,6 +1247,7 @@ export default function TransitMap({ initialSelectedAssetId }: TransitMapProps) 
         <Card className="p-3">
           <div className="h-[620px] w-full overflow-hidden rounded-[1.5rem]">
             <MapContainer center={[39.5, -98.35]} zoom={4} scrollWheelZoom className="h-full w-full">
+              <MapBackgroundClickHandler onBackgroundClick={() => setSelectedAssetId(null)} />
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -1246,7 +1263,12 @@ export default function TransitMap({ initialSelectedAssetId }: TransitMapProps) 
                   key={`route-${asset.id}`}
                   positions={waypoints}
                   pathOptions={routeStyle}
-                  eventHandlers={{ click: () => setSelectedAssetId(asset.id) }}
+                  eventHandlers={{
+                    click: (event) => {
+                      event.originalEvent.stopPropagation();
+                      setSelectedAssetId(asset.id);
+                    },
+                  }}
                 >
                   <Popup>
                     <div className="min-w-[220px] text-sm text-slate-700">
@@ -1266,6 +1288,7 @@ export default function TransitMap({ initialSelectedAssetId }: TransitMapProps) 
                   key={`completed-${selectedSnapshot.asset.id}`}
                   positions={selectedSnapshot.completedWaypoints}
                   pathOptions={getCompletedSegmentStyle(selectedSnapshot.mode)}
+                  eventHandlers={{ click: (event) => event.originalEvent.stopPropagation() }}
                 >
                   <Popup>
                     <div className="min-w-[220px] text-sm text-slate-700">
@@ -1281,13 +1304,25 @@ export default function TransitMap({ initialSelectedAssetId }: TransitMapProps) 
                 <Marker
                   key={`node-${milestone.key}`}
                   position={milestone.coordinate}
-                  icon={getRouteNodeIcon(milestone.type)}
+                  icon={getRouteNodeIcon(
+                    milestone.type,
+                    selectedSnapshot ? milestone.shipments.includes(selectedSnapshot.asset.id) : false,
+                  )}
                   zIndexOffset={350}
+                  eventHandlers={{
+                    click: (event) => {
+                      event.originalEvent.stopPropagation();
+                      if (milestone.shipments.length > 0) {
+                        setSelectedAssetId(milestone.shipments[0]);
+                      }
+                    },
+                  }}
                 >
                   <Popup>
                     <div className="min-w-[210px] text-sm text-slate-700">
                       <p className="font-semibold text-slate-900">{milestone.label}</p>
                       <p className="mt-1 text-slate-600">{milestone.type} milestone</p>
+                      <p className="mt-1 text-slate-600">Route: {milestone.laneId}</p>
                       <p className="mt-2 text-slate-600">Shipment links: {milestone.shipments.join(", ")}</p>
                     </div>
                   </Popup>
@@ -1303,7 +1338,12 @@ export default function TransitMap({ initialSelectedAssetId }: TransitMapProps) 
                   key={`truck-${asset.id}`}
                   position={truckCoordinate}
                   icon={getVehicleIcon(asset, selectedAssetId === asset.id, mode, routeStatus, isDimmed)}
-                  eventHandlers={{ click: () => setSelectedAssetId(asset.id) }}
+                  eventHandlers={{
+                    click: (event) => {
+                      event.originalEvent.stopPropagation();
+                      setSelectedAssetId(asset.id);
+                    },
+                  }}
                   zIndexOffset={selectedAssetId === asset.id ? 1000 : 700}
                 >
                   <Popup>
