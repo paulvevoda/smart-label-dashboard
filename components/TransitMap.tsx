@@ -781,7 +781,7 @@ export default function TransitMap() {
 
     routeSnapshots.forEach(({ asset, laneId, routeWaypoints }) => {
       routeWaypoints.forEach((waypoint, index) => {
-        if (!waypoint.nodeType) return;
+        if (!waypoint.nodeType || waypoint.nodeType === "Hub") return;
         const coordinate = waypoint.coordinate;
         const roundedKey = `${coordinate[0].toFixed(2)}:${coordinate[1].toFixed(2)}`;
         const key = `${laneId}:${roundedKey}:${waypoint.nodeType}:${index}`;
