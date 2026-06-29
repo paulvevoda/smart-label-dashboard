@@ -42,6 +42,7 @@ const CHICAGO_ATLANTA_ASSET_ID = "TR-CHI-ATL-65";
 const SEATTLE_RENO_ASSET_ID = "TR-SEA-RNO-395";
 const CHICAGO_NEWARK_ASSET_ID = "TR-CHI-EWR-80";
 const NYC_NEWARK_ASSET_ID = "TR-NYC-EWR-95";
+const NYC_BOSTON_ASSET_ID = "TR-NYC-BOS-95";
 
 const controlledRouteIdByAssetId: Record<string, string> = {
   "TR-SEA-12": "seattle-boise",
@@ -50,6 +51,7 @@ const controlledRouteIdByAssetId: Record<string, string> = {
   [SEATTLE_RENO_ASSET_ID]: "seattle-reno",
   [CHICAGO_NEWARK_ASSET_ID]: "chicago-newark",
   [NYC_NEWARK_ASSET_ID]: "nyc-newark",
+  [NYC_BOSTON_ASSET_ID]: "nyc-boston",
 };
 
 const isDisabledLocalLaneAsset = (asset: LogisticsAsset) => {
@@ -176,6 +178,26 @@ const nycToNewarkDemoAsset: LogisticsAsset = {
   labelId: "LBL-9595",
 };
 
+const nycToBostonDemoAsset: LogisticsAsset = {
+  id: NYC_BOSTON_ASSET_ID,
+  assetType: "Truck",
+  carrier: "Northeast Freight",
+  customer: "Vertex Medical",
+  location: { city: "New York", state: "NY", coordinates: [40.7128, -74.006] },
+  destination: "Boston, MA",
+  eta: "4h 45m",
+  labelsPresent: 44,
+  labelsActive: 39,
+  labelsIdle: 3,
+  labelsOffline: 2,
+  negativeAlerts24h: 1,
+  negativeAlertRate: 0.0227,
+  riskStatus: "Normal",
+  battery: { healthy: 76, warning: 17, critical: 7 },
+  recentEvents: ["Shipment Departed"],
+  labelId: "LBL-9895",
+};
+
 const seattleToBoiseRoute: RouteWaypoint[] = [
   { name: "Seattle, WA", coordinate: [47.6062, -122.3321], nodeType: "Origin" },
   { name: "Snoqualmie Pass, WA", coordinate: [47.3923, -121.4001] },
@@ -267,6 +289,16 @@ const nycToNewarkRoute: RouteWaypoint[] = [
   { name: "Newark, NJ", coordinate: [40.7357, -74.1724], nodeType: "Destination" },
 ];
 
+const nycToBostonRoute: RouteWaypoint[] = [
+  { name: "New York City, NY", coordinate: [40.7128, -74.006], nodeType: "Origin" },
+  { name: "Bronx, NY", coordinate: [40.8448, -73.8648] },
+  { name: "Stamford, CT", coordinate: [41.0534, -73.5387] },
+  { name: "New Haven, CT", coordinate: [41.3083, -72.9279], nodeType: "Hub" },
+  { name: "New London, CT", coordinate: [41.3557, -72.0995] },
+  { name: "Providence, RI", coordinate: [41.824, -71.4128], nodeType: "Hub" },
+  { name: "Boston, MA", coordinate: [42.3601, -71.0589], nodeType: "Destination" },
+];
+
 const truckRoutesByLaneId: Record<string, RouteWaypoint[]> = {
   "seattle-boise": seattleToBoiseRoute,
   "seattle-chicago": seattleToChicagoRoute,
@@ -274,6 +306,7 @@ const truckRoutesByLaneId: Record<string, RouteWaypoint[]> = {
   "seattle-reno": seattleToRenoRoute,
   "chicago-newark": chicagoToNewarkRoute,
   "nyc-newark": nycToNewarkRoute,
+  "nyc-boston": nycToBostonRoute,
 };
 
 const DESTINATION_COORDINATES: Record<string, Coordinate> = {
@@ -289,6 +322,7 @@ const DESTINATION_COORDINATES: Record<string, Coordinate> = {
   "Chicago, IL": [41.8781, -87.6298],
   "Atlanta, GA": [33.749, -84.388],
   "Reno, NV": [39.5296, -119.8138],
+  "Boston, MA": [42.3601, -71.0589],
   "Orlando Fulfillment": [28.5383, -81.3792],
 };
 
@@ -550,7 +584,11 @@ export default function TransitMap() {
       ? withChicagoNewark
       : [...withChicagoNewark, nycToNewarkDemoAsset];
 
-    return withNycNewark;
+    const withNycBoston = withNycNewark.some((asset) => asset.id === NYC_BOSTON_ASSET_ID)
+      ? withNycNewark
+      : [...withNycNewark, nycToBostonDemoAsset];
+
+    return withNycBoston;
   }, [state.assets]);
 
   const filteredAssets = useMemo(() => {
