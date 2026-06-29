@@ -34,6 +34,7 @@ type RouteMilestone = {
   type: RouteNodeType;
   shipments: string[];
   laneId: string;
+  isSelectedShipmentNode: boolean;
 };
 type RouteProfile = {
   laneId: string;
@@ -704,19 +705,21 @@ function MapBackgroundClickHandler({ onBackgroundClick }: { onBackgroundClick: (
   return null;
 }
 
-const getRouteNodeIcon = (type: RouteNodeType, isSelectedShipmentNode: boolean) => {
-  const styleByType: Record<RouteNodeType, { bg: string; border: string }> = {
-    Origin: { bg: "#22d3ee", border: "rgba(34,211,238,0.4)" },
-    Destination: {
-      bg: isSelectedShipmentNode ? "#94a3b8" : "#64748b",
-      border: isSelectedShipmentNode ? "rgba(203,213,225,0.48)" : "rgba(148,163,184,0.38)",
-    },
-    Hub: { bg: "#a78bfa", border: "rgba(167,139,250,0.35)" },
-  };
-  const style = styleByType[type];
+const getRouteNodeIcon = (isSelectedShipmentNode: boolean) => {
+  const style = isSelectedShipmentNode
+    ? {
+      bg: "#475569",
+      border: "rgba(226,232,240,0.82)",
+      glow: "rgba(148,163,184,0.28)",
+    }
+    : {
+      bg: "#334155",
+      border: "rgba(148,163,184,0.46)",
+      glow: "rgba(2,6,23,0.62)",
+    };
 
   return divIcon({
-    html: `<div style="display:flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:9999px;border:2px solid ${style.border};background:${style.bg};box-shadow:0 0 0 3px rgba(2,6,23,0.55);cursor:pointer;"></div>`,
+    html: `<div style="display:flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:9999px;border:2px solid ${style.border};background:${style.bg};box-shadow:0 0 0 3px ${style.glow};cursor:pointer;"></div>`,
     className: "border-0 bg-transparent",
     iconSize: [14, 14],
     iconAnchor: [7, 7],
@@ -1188,12 +1191,16 @@ export default function TransitMap({ initialSelectedAssetId }: TransitMapProps) 
 
   const routeMilestones = useMemo(() => {
     const milestoneMap = new Map<string, RouteMilestone>();
-    const routeScope = selectedSnapshot ? [selectedSnapshot] : routeSnapshots;
+    const routeScope = routeSnapshots;
 
     routeScope.forEach(({ asset, laneId, routeWaypoints }) => {
       routeWaypoints.forEach((waypoint, index) => {
         if (!waypoint.nodeType) return;
-        if (!selectedSnapshot && waypoint.nodeType === "Hub") return;
+        const isSelectedShipmentNode = selectedSnapshot?.asset.id === asset.id;
+
+        // Keep overview clean by only surfacing hubs for the selected shipment.
+        if (waypoint.nodeType === "Hub" && !isSelectedShipmentNode) return;
+
         const coordinate = waypoint.coordinate;
         const roundedKey = `${coordinate[0].toFixed(2)}:${coordinate[1].toFixed(2)}`;
         const key = `${laneId}:${roundedKey}:${waypoint.nodeType}:${index}`;
@@ -1201,6 +1208,9 @@ export default function TransitMap({ initialSelectedAssetId }: TransitMapProps) 
           const existing = milestoneMap.get(key);
           if (existing && !existing.shipments.includes(asset.id)) {
             existing.shipments.push(asset.id);
+            if (isSelectedShipmentNode) {
+              existing.isSelectedShipmentNode = true;
+            }
           }
           return;
         }
@@ -1212,6 +1222,7 @@ export default function TransitMap({ initialSelectedAssetId }: TransitMapProps) 
           type: waypoint.nodeType,
           shipments: [asset.id],
           laneId,
+          isSelectedShipmentNode,
         });
       });
     });
@@ -1291,10 +1302,7 @@ export default function TransitMap({ initialSelectedAssetId }: TransitMapProps) 
                 <Marker
                   key={`node-${milestone.key}`}
                   position={milestone.coordinate}
-                  icon={getRouteNodeIcon(
-                    milestone.type,
-                    selectedSnapshot ? milestone.shipments.includes(selectedSnapshot.asset.id) : false,
-                  )}
+                  icon={getRouteNodeIcon(milestone.isSelectedShipmentNode)}
                   zIndexOffset={350}
                   eventHandlers={{
                     click: (event) => {
