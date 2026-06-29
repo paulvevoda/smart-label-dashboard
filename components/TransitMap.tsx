@@ -19,7 +19,7 @@ const Polyline = dynamic(() => import("react-leaflet").then((mod) => mod.Polylin
 const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), { ssr: false });
 
 type Coordinate = [number, number];
-type RouteNodeType = "Origin" | "Destination" | "Hub" | "Checkpoint";
+type RouteNodeType = "Origin" | "Destination" | "Hub";
 type RouteMilestone = {
   key: string;
   coordinate: Coordinate;
@@ -65,7 +65,6 @@ const getRouteNodeIcon = (type: RouteNodeType) => {
     Origin: { bg: "#22d3ee", border: "rgba(34,211,238,0.35)" },
     Destination: { bg: "#34d399", border: "rgba(52,211,153,0.35)" },
     Hub: { bg: "#a78bfa", border: "rgba(167,139,250,0.35)" },
-    Checkpoint: { bg: "#94a3b8", border: "rgba(148,163,184,0.28)" },
   };
   const style = styleByType[type];
 
@@ -355,18 +354,18 @@ export default function TransitMap() {
         const isOrigin = index === 0;
         const isDestination = index === waypoints.length - 1;
         const isHub = !isOrigin && !isDestination && nearest.node !== null && nearest.distance <= 1.25;
+        if (!isOrigin && !isDestination && !isHub) return;
+
         const type: RouteNodeType = isOrigin
           ? "Origin"
           : isDestination
             ? "Destination"
-            : isHub
-              ? "Hub"
-              : "Checkpoint";
+            : "Hub";
         const label = isOrigin
           ? `${asset.location.city}, ${asset.location.state}`
           : isDestination
             ? asset.destination
-            : nearestNodeName ?? `Checkpoint ${index}`;
+            : nearestNodeName ?? `Hub ${index}`;
 
         const key = `${roundedKey}:${type}`;
         if (milestoneMap.has(key)) {
