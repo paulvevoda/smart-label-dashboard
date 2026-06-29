@@ -83,6 +83,15 @@ const isDisabledCityConnectedAsset = (asset: LogisticsAsset) => {
   return blockedCityTokens.some((token) => originText.includes(token) || destinationText.includes(token));
 };
 
+const isDuplicateChicagoNewarkAsset = (asset: LogisticsAsset) => {
+  if (asset.id === CHICAGO_NEWARK_ASSET_ID) return false;
+
+  const originText = `${asset.location.city}, ${asset.location.state}`.toLowerCase();
+  const destinationText = asset.destination.toLowerCase();
+
+  return originText.includes("chicago") && destinationText.includes("newark");
+};
+
 const seattleToChicagoDemoAsset: LogisticsAsset = {
   id: SEATTLE_CHICAGO_ASSET_ID,
   assetType: "Truck",
@@ -292,13 +301,21 @@ const seattleToRenoRoute: RouteWaypoint[] = [
 
 const chicagoToNewarkRoute: RouteWaypoint[] = [
   { name: "Chicago, IL", coordinate: [41.8781, -87.6298], nodeType: "Origin" },
+  { name: "South Holland, IL", coordinate: [41.6009, -87.6067] },
   { name: "Gary, IN", coordinate: [41.5934, -87.3464] },
+  { name: "Merrillville, IN", coordinate: [41.4828, -87.3328] },
   { name: "South Bend, IN", coordinate: [41.6764, -86.252] },
+  { name: "Elkhart, IN", coordinate: [41.6819, -85.9767] },
   { name: "Toledo, OH", coordinate: [41.6528, -83.5379] },
-  { name: "Cleveland, OH", coordinate: [41.4993, -81.6944], nodeType: "Hub" },
+  { name: "Elyria, OH", coordinate: [41.3684, -82.1076] },
+  { name: "Cleveland South, OH", coordinate: [41.39, -81.76], nodeType: "Hub" },
   { name: "Youngstown, OH", coordinate: [41.0998, -80.6495] },
+  { name: "Mercer, PA", coordinate: [41.227, -80.2392] },
   { name: "Clarion, PA", coordinate: [41.2148, -79.3853] },
+  { name: "DuBois, PA", coordinate: [41.1192, -78.76] },
+  { name: "Lock Haven, PA", coordinate: [41.137, -77.4469] },
   { name: "Bloomsburg, PA", coordinate: [41.0037, -76.4549] },
+  { name: "Hazleton, PA", coordinate: [40.9584, -75.9746] },
   { name: "Stroudsburg, PA", coordinate: [40.9868, -75.1946] },
   { name: "Parsippany, NJ", coordinate: [40.8579, -74.425], nodeType: "Hub" },
   { name: "Newark, NJ", coordinate: [40.7357, -74.1724], nodeType: "Destination" },
@@ -614,6 +631,7 @@ export default function TransitMap() {
       !isDisabledLocalLaneAsset(asset)
       && !isMiamiConnectedAsset(asset)
       && !isDisabledCityConnectedAsset(asset)
+      && !isDuplicateChicagoNewarkAsset(asset)
     ));
 
     const withSeattleChicago = baseAssets.some((asset) => asset.id === SEATTLE_CHICAGO_ASSET_ID)
