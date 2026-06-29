@@ -123,7 +123,7 @@ export const getAlertCountsByType = (): AlertTrendCategory[] => {
     { category: "Temperature", count: 4, activeAlerts: 1, highestSeverity: "Warning" as AlertSeverity },
     { category: "Humidity", count: 2, activeAlerts: 1, highestSeverity: "Normal" as AlertSeverity },
     { category: "Shock", count: 2, activeAlerts: 1, highestSeverity: "Critical" as AlertSeverity },
-    { category: "Light Exposure", count: 2, activeAlerts: 1, highestSeverity: "Warning" as AlertSeverity },
+    { category: "Package Removed", count: 2, activeAlerts: 1, highestSeverity: "Warning" as AlertSeverity },
     { category: "Tamper", count: 1, activeAlerts: 1, highestSeverity: "Critical" as AlertSeverity },
     { category: "Battery", count: 2, activeAlerts: 1, highestSeverity: "Warning" as AlertSeverity },
     { category: "Offline", count: 1, activeAlerts: 1, highestSeverity: "Critical" as AlertSeverity },

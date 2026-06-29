@@ -11,7 +11,7 @@ export type SensorEventType =
   | "Temperature Alert"
   | "Humidity Alert"
   | "Shock Detected"
-  | "Light Exposure"
+  | "Package Removed"
   | "Tamper Detected"
   | "Battery Warning"
   | "Label Offline"

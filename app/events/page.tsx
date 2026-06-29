@@ -76,7 +76,7 @@ export default function EventsPage() {
         if (filter === "Temperature") return event.eventType === "Temperature Alert";
         if (filter === "Humidity") return event.eventType === "Humidity Alert";
         if (filter === "Shock") return event.eventType === "Shock Detected";
-        if (filter === "Light") return event.eventType === "Light Exposure";
+        if (filter === "Package Removed") return event.eventType === "Package Removed";
         if (filter === "Tamper") return event.eventType === "Tamper Detected";
         if (filter === "Battery") return event.eventType === "Battery Warning";
         if (filter === "Offline") return event.eventType === "Label Offline";

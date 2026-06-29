@@ -20,7 +20,7 @@ const filterOptions = [
   "Temperature",
   "Humidity",
   "Shock",
-  "Light",
+  "Package Removed",
   "Tamper",
   "Battery",
   "Offline",

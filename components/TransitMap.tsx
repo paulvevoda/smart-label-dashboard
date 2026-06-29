@@ -613,7 +613,7 @@ const getMarkerSymbol = (asset: LogisticsAsset) => {
 
   if (recentEvents.includes("temperature") || recentEvents.includes("humidity")) return "T";
   if (recentEvents.includes("shock") || recentEvents.includes("tamper")) return "S";
-  if (recentEvents.includes("light")) return "L";
+  if (recentEvents.includes("package removed") || recentEvents.includes("light")) return "P";
   if (recentEvents.includes("battery")) return "B";
   if (recentEvents.includes("delay") || recentEvents.includes("hold")) return "D";
   if (recentEvents.includes("deviat") || recentEvents.includes("route")) return "R";
@@ -629,7 +629,7 @@ const getTruckStatus = (asset: LogisticsAsset) => {
 
 const getActiveAlertSummary = (asset: LogisticsAsset) => {
   const critical = asset.recentEvents.find((event) => /tamper|offline|shock/i.test(event));
-  const warning = asset.recentEvents.find((event) => /temperature|humidity|light|battery|delay|hold|route/i.test(event));
+  const warning = asset.recentEvents.find((event) => /temperature|humidity|package removed|light|battery|delay|hold|route/i.test(event));
   return critical ?? warning ?? "No active exception";
 };
 

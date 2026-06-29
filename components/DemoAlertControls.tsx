@@ -14,7 +14,7 @@ const alertActions: Array<{ label: string; eventType: DemoState["alerts"][number
   { label: "Temperature Alert", eventType: "Temperature Alert", severity: "Warning", assetId: "TR-142" },
   { label: "Humidity Alert", eventType: "Humidity Alert", severity: "Normal", assetId: "TR-203" },
   { label: "Shock Event", eventType: "Shock Detected", severity: "Critical", assetId: "TR-142" },
-  { label: "Light Exposure", eventType: "Light Exposure", severity: "Warning", assetId: "TR-203" },
+  { label: "Package Removed", eventType: "Package Removed", severity: "Warning", assetId: "TR-203" },
   { label: "Tamper Event", eventType: "Tamper Detected", severity: "Critical", assetId: "TR-142" },
   { label: "Battery Warning", eventType: "Battery Warning", severity: "Warning", assetId: "TR-203" },
   { label: "Label Offline", eventType: "Label Offline", severity: "Critical", assetId: "TR-142" },

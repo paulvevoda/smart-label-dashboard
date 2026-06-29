@@ -18,7 +18,7 @@ export default function EnvironmentalReadings({ labels }: EnvironmentalReadingsP
     { title: "Temperature", current: "7.2°C", threshold: "2°C–8°C", status: "Normal", tone: "normal" },
     { title: "Humidity", current: "58%", threshold: "45%–65%", status: "Normal", tone: "normal" },
     { title: "Shock", current: "2.8g", threshold: "≤5.0g", status: "Normal", tone: "normal" },
-    { title: "Light exposure", current: "Low", threshold: "<4 hrs", status: "Normal", tone: "normal" },
+    { title: "Package removed", current: "Low", threshold: "<4 hrs", status: "Normal", tone: "normal" },
     { title: "Tamper", current: "No tamper detected", threshold: "Seal intact", status: "Normal", tone: "normal" },
     {
       title: "Battery",

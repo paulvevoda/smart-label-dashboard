@@ -121,7 +121,7 @@ const baseAssets = [
     labelsOffline: 4,
     negativeAlerts24h: 3,
     battery: { healthy: 69, warning: 19, critical: 12 },
-    recentEvents: ["Light Exposure", "Battery Warning"],
+    recentEvents: ["Package Removed", "Battery Warning"],
     labelId: "LBL-1937",
   },
   {
@@ -189,7 +189,7 @@ const baseAssets = [
     labelsOffline: 7,
     negativeAlerts24h: 8,
     battery: { healthy: 66, warning: 23, critical: 11 },
-    recentEvents: ["Light Exposure", "Label Offline", "Shipment Arrived"],
+    recentEvents: ["Package Removed", "Label Offline", "Shipment Arrived"],
     labelId: "LBL-5820",
   },
 ].map((asset) => {
