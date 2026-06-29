@@ -84,6 +84,36 @@ export default function MapRiskLegend() {
           Route deviation
         </div>
       </div>
+
+      <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/70 p-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-cyan-200">Route key</p>
+        <div className="mt-2 grid gap-2">
+          <div className="flex items-center gap-3 rounded-xl border border-white/5 bg-slate-900/40 px-2.5 py-1.5">
+            <svg width="72" height="10" viewBox="0 0 72 10" aria-hidden="true" focusable="false" className="shrink-0">
+              <line x1="2" y1="5" x2="70" y2="5" stroke="#38bdf8" strokeWidth="2.5" strokeLinecap="round" />
+            </svg>
+            <span className="text-xs text-slate-300">Truck route</span>
+          </div>
+          <div className="flex items-center gap-3 rounded-xl border border-white/5 bg-slate-900/40 px-2.5 py-1.5">
+            <svg width="72" height="10" viewBox="0 0 72 10" aria-hidden="true" focusable="false" className="shrink-0">
+              <line x1="2" y1="5" x2="70" y2="5" stroke="#38bdf8" strokeWidth="2.5" strokeDasharray="11 6" strokeLinecap="butt" />
+            </svg>
+            <span className="text-xs text-slate-300">Rail route</span>
+          </div>
+          <div className="flex items-center gap-3 rounded-xl border border-white/5 bg-slate-900/40 px-2.5 py-1.5">
+            <svg width="72" height="10" viewBox="0 0 72 10" aria-hidden="true" focusable="false" className="shrink-0">
+              <line x1="2" y1="5" x2="70" y2="5" stroke="#38bdf8" strokeWidth="2.5" strokeDasharray="1 12" strokeLinecap="round" />
+            </svg>
+            <span className="text-xs text-slate-300">Air route</span>
+          </div>
+          <div className="flex items-center gap-3 rounded-xl border border-white/5 bg-slate-900/40 px-2.5 py-1.5">
+            <svg width="72" height="10" viewBox="0 0 72 10" aria-hidden="true" focusable="false" className="shrink-0">
+              <line x1="2" y1="5" x2="70" y2="5" stroke="#38bdf8" strokeWidth="2.5" strokeDasharray="1 8 12 8" strokeLinecap="round" />
+            </svg>
+            <span className="text-xs text-slate-300">Vessel route</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
