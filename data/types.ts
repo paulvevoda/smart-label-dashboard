@@ -3,6 +3,7 @@ export type BatteryStatus = "Healthy" | "Warning" | "Critical";
 export type AssetType = "Distribution Center" | "Warehouse" | "Trailer" | "Truck" | "Container" | "Rail Car";
 export type NodeType = "Distribution Center" | "Warehouse" | "Port" | "Customer Facility" | "Regional Hub";
 export type RiskStatus = "Normal" | "Warning" | "Critical";
+export type TransitShipmentStatus = "on-track" | "delayed" | "early" | "completed";
 export type ShipmentStatus = "On Time" | "Delayed" | "At Risk";
 export type ShipmentActivity = "Active" | "Idle" | "Expected Delivery Next 24 Hours";
 export type AlertSeverity = "Normal" | "Warning" | "Critical";
@@ -57,6 +58,15 @@ export type LogisticsAsset = {
   };
   recentEvents: string[];
   labelId: string;
+  routeProgress?: {
+    origin?: string;
+    destination?: string;
+    currentNode?: string;
+    completedRouteSegments?: number;
+    status?: TransitShipmentStatus;
+    plannedArrivalIso?: string;
+    projectedArrivalIso?: string;
+  };
 };
 
 export type LogisticsNode = {

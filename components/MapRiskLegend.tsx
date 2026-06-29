@@ -43,11 +43,15 @@ export default function MapRiskLegend() {
         </div>
         <div className="flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-2 text-sm text-cyan-200">
           <span className="h-2.5 w-2.5 rounded-full bg-cyan-400" />
-          On track
+          On track (selected)
+        </div>
+        <div className="flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+          <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+          Delayed (selected)
         </div>
         <div className="flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
           <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-          Completed
+          Early (selected)
         </div>
         <div className="flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
           <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
@@ -111,6 +115,29 @@ export default function MapRiskLegend() {
               <line x1="2" y1="5" x2="70" y2="5" stroke="#38bdf8" strokeWidth="2.5" strokeDasharray="1 8 12 8" strokeLinecap="round" />
             </svg>
             <span className="text-xs text-slate-300">Vessel route</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-3 rounded-2xl border border-white/10 bg-slate-950/70 p-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-cyan-200">Shipment status key</p>
+        <p className="mt-1 text-[11px] text-slate-400">Applies when a shipment is selected</p>
+        <div className="mt-2 grid gap-2">
+          <div className="flex items-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-500/10 px-2.5 py-1.5 text-xs text-cyan-200">
+            <span className="h-2.5 w-2.5 rounded-full bg-cyan-400" />
+            On track route
+          </div>
+          <div className="flex items-center gap-2 rounded-xl border border-amber-400/20 bg-amber-500/10 px-2.5 py-1.5 text-xs text-amber-200">
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+            Delayed route
+          </div>
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-2.5 py-1.5 text-xs text-emerald-200">
+            <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+            Early route
+          </div>
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-300/20 bg-emerald-500/5 px-2.5 py-1.5 text-xs text-emerald-100">
+            <span className="h-2.5 w-2.5 rounded-full bg-emerald-300" />
+            Completed segment from origin
           </div>
         </div>
       </div>

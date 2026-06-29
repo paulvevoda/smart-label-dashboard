@@ -10,7 +10,7 @@ import MapRiskLegend from "@/components/MapRiskLegend";
 import TransitMapControls from "@/components/TransitMapControls";
 import Card from "@/components/ui/Card";
 import { useDemoState } from "@/context/DemoStateContext";
-import type { LogisticsAsset, LogisticsNode } from "@/data/types";
+import type { LogisticsAsset, LogisticsNode, TransitShipmentStatus } from "@/data/types";
 
 const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false });
@@ -134,6 +134,13 @@ const seattleToChicagoDemoAsset: LogisticsAsset = {
   battery: { healthy: 72, warning: 18, critical: 10 },
   recentEvents: ["Battery Warning", "Shipment Departed"],
   labelId: "LBL-9090",
+  routeProgress: {
+    origin: "Seattle, WA",
+    destination: "Chicago, IL",
+    currentNode: "Billings, MT",
+    completedRouteSegments: 9,
+    status: "on-track",
+  },
 };
 
 const chicagoToAtlantaDemoAsset: LogisticsAsset = {
@@ -154,6 +161,13 @@ const chicagoToAtlantaDemoAsset: LogisticsAsset = {
   battery: { healthy: 69, warning: 22, critical: 9 },
   recentEvents: ["Delay Hold", "Shipment Departed"],
   labelId: "LBL-9165",
+  routeProgress: {
+    origin: "Chicago, IL",
+    destination: "Atlanta, GA",
+    currentNode: "Nashville, TN",
+    completedRouteSegments: 7,
+    status: "delayed",
+  },
 };
 
 const seattleToRenoDemoAsset: LogisticsAsset = {
@@ -174,6 +188,13 @@ const seattleToRenoDemoAsset: LogisticsAsset = {
   battery: { healthy: 79, warning: 15, critical: 6 },
   recentEvents: ["Shipment Departed"],
   labelId: "LBL-9395",
+  routeProgress: {
+    origin: "Seattle, WA",
+    destination: "Reno, NV",
+    currentNode: "Medford, OR",
+    completedRouteSegments: 6,
+    status: "early",
+  },
 };
 
 const chicagoToNewarkDemoAsset: LogisticsAsset = {
@@ -194,6 +215,13 @@ const chicagoToNewarkDemoAsset: LogisticsAsset = {
   battery: { healthy: 74, warning: 18, critical: 8 },
   recentEvents: ["Battery Warning", "Shipment Departed"],
   labelId: "LBL-8080",
+  routeProgress: {
+    origin: "Chicago, IL",
+    destination: "Newark, NJ",
+    currentNode: "Mercer, PA",
+    completedRouteSegments: 10,
+    status: "on-track",
+  },
 };
 
 const nycToNewarkDemoAsset: LogisticsAsset = {
@@ -214,6 +242,13 @@ const nycToNewarkDemoAsset: LogisticsAsset = {
   battery: { healthy: 68, warning: 24, critical: 8 },
   recentEvents: ["Route Deviation", "Shipment Departed"],
   labelId: "LBL-9595",
+  routeProgress: {
+    origin: "New York City, NY",
+    destination: "Newark, NJ",
+    currentNode: "Secaucus, NJ",
+    completedRouteSegments: 4,
+    status: "delayed",
+  },
 };
 
 const nycToBostonDemoAsset: LogisticsAsset = {
@@ -234,6 +269,13 @@ const nycToBostonDemoAsset: LogisticsAsset = {
   battery: { healthy: 76, warning: 17, critical: 7 },
   recentEvents: ["Shipment Departed"],
   labelId: "LBL-9895",
+  routeProgress: {
+    origin: "New York City, NY",
+    destination: "Boston, MA",
+    currentNode: "Providence, RI",
+    completedRouteSegments: 5,
+    status: "early",
+  },
 };
 
 const losAngelesToAtlantaRailDemoAsset: LogisticsAsset = {
@@ -254,6 +296,13 @@ const losAngelesToAtlantaRailDemoAsset: LogisticsAsset = {
   battery: { healthy: 67, warning: 21, critical: 12 },
   recentEvents: ["Shock Detected", "Shipment Departed"],
   labelId: "LBL-4040",
+  routeProgress: {
+    origin: "Los Angeles Rail Yard, CA",
+    destination: "Atlanta, GA",
+    currentNode: "Memphis, TN",
+    completedRouteSegments: 12,
+    status: "on-track",
+  },
 };
 
 const losAngelesToShanghaiOceanDemoAsset: LogisticsAsset = {
@@ -274,6 +323,13 @@ const losAngelesToShanghaiOceanDemoAsset: LogisticsAsset = {
   battery: { healthy: 71, warning: 19, critical: 10 },
   recentEvents: ["Temperature Alert", "Shipment Departed"],
   labelId: "LBL-5888",
+  routeProgress: {
+    origin: "Port of Los Angeles, CA",
+    destination: "Shanghai, China",
+    currentNode: "Korea Strait Transit",
+    completedRouteSegments: 19,
+    status: "delayed",
+  },
 };
 
 const atlantaToFrankfurtAirDemoAsset: LogisticsAsset = {
@@ -294,6 +350,13 @@ const atlantaToFrankfurtAirDemoAsset: LogisticsAsset = {
   battery: { healthy: 73, warning: 18, critical: 9 },
   recentEvents: ["Delay Hold", "Shipment Departed"],
   labelId: "LBL-7474",
+  routeProgress: {
+    origin: "Atlanta Hartsfield-Jackson, GA",
+    destination: "Frankfurt Airport, Germany",
+    currentNode: "Ireland Approach",
+    completedRouteSegments: 9,
+    status: "delayed",
+  },
 };
 
 const portOfLaToLaRailYardDemoAsset: LogisticsAsset = {
@@ -314,6 +377,13 @@ const portOfLaToLaRailYardDemoAsset: LogisticsAsset = {
   battery: { healthy: 77, warning: 16, critical: 7 },
   recentEvents: ["Route Deviation", "Shipment Departed"],
   labelId: "LBL-1110",
+  routeProgress: {
+    origin: "Port of Los Angeles, CA",
+    destination: "Los Angeles Rail Yard, CA",
+    currentNode: "Vernon / Commerce Freight Area, CA",
+    completedRouteSegments: 3,
+    status: "on-track",
+  },
 };
 
 const atlantaToHartsfieldJacksonDemoAsset: LogisticsAsset = {
@@ -334,6 +404,13 @@ const atlantaToHartsfieldJacksonDemoAsset: LogisticsAsset = {
   battery: { healthy: 74, warning: 18, critical: 8 },
   recentEvents: ["Delay Hold", "Shipment Departed"],
   labelId: "LBL-4285",
+  routeProgress: {
+    origin: "Atlanta, GA",
+    destination: "Hartsfield-Jackson Atlanta International Airport, GA",
+    currentNode: "South Atlanta Freight Corridor, GA",
+    completedRouteSegments: 2,
+    status: "early",
+  },
 };
 
 const seattleToBoiseRoute: RouteWaypoint[] = [
@@ -558,31 +635,53 @@ const DESTINATION_COORDINATES: Record<string, Coordinate> = {
   "Hartsfield-Jackson Atlanta International Airport, GA": [33.6407, -84.4277],
 };
 
-const getRouteStyle = (riskStatus: LogisticsAsset["riskStatus"], hasIssue: boolean, mode: VehicleMode) => {
-  const modeDash = mode === "rail"
-    ? "11 6"
-    : mode === "ocean"
-      ? "1 8 12 8"
-      : mode === "air"
-        ? "1 12"
-      : "";
-  const modeLineCap: "round" | "butt" = (mode === "ocean" || mode === "air") ? "round" : "butt";
+const getModeDashPattern = (mode: VehicleMode) => {
+  if (mode === "rail") return "11 6";
+  if (mode === "ocean") return "1 8 12 8";
+  if (mode === "air") return "1 12";
+  return "";
+};
 
-  if (riskStatus === "Critical" || hasIssue) {
-    return { color: "#fb7185", weight: 4, opacity: 0.95, dashArray: modeDash, lineCap: modeLineCap };
-  }
+const getModeLineCap = (mode: VehicleMode): "round" | "butt" => {
+  return (mode === "ocean" || mode === "air") ? "round" : "butt";
+};
 
-  if (riskStatus === "Warning") {
-    return {
-      color: "#f59e0b",
-      weight: 3.2,
-      opacity: 0.8,
-      dashArray: mode === "truck" ? "8 6" : modeDash,
-      lineCap: mode === "truck" ? "butt" : modeLineCap,
-    };
-  }
+const getOverviewRouteStyle = (mode: VehicleMode) => {
+  return {
+    color: "#64748b",
+    weight: 2.2,
+    opacity: 0.38,
+    dashArray: getModeDashPattern(mode),
+    lineCap: getModeLineCap(mode),
+  };
+};
 
-  return { color: "#38bdf8", weight: 3, opacity: 0.75, dashArray: modeDash, lineCap: modeLineCap };
+const getSelectedRouteStyle = (status: TransitShipmentStatus, mode: VehicleMode) => {
+  const color = status === "delayed"
+    ? "#f59e0b"
+    : status === "early"
+      ? "#34d399"
+      : status === "completed"
+        ? "#10b981"
+        : "#22d3ee";
+
+  return {
+    color,
+    weight: status === "completed" ? 4.2 : 3.7,
+    opacity: 0.95,
+    dashArray: getModeDashPattern(mode),
+    lineCap: getModeLineCap(mode),
+  };
+};
+
+const getCompletedSegmentStyle = (mode: VehicleMode) => {
+  return {
+    color: "#34d399",
+    weight: 4.6,
+    opacity: 0.88,
+    dashArray: getModeDashPattern(mode),
+    lineCap: getModeLineCap(mode),
+  };
 };
 
 const getLaneStyle = (riskStatus: LogisticsAsset["riskStatus"]) => {
@@ -639,17 +738,24 @@ const getBatteryPosture = (asset: LogisticsAsset) => {
   return "Healthy";
 };
 
-const getVehicleIcon = (asset: LogisticsAsset, isSelected: boolean, mode: VehicleMode) => {
-  const color = getTruckStatus(asset) === "Exception"
-    ? "#fb7185"
-    : getTruckStatus(asset) === "Warning"
-      ? "#f59e0b"
-      : getTruckStatus(asset) === "Delivered"
-        ? "#34d399"
-        : "#22d3ee";
+const getVehicleIcon = (
+  asset: LogisticsAsset,
+  isSelected: boolean,
+  mode: VehicleMode,
+  selectedRouteStatus: TransitShipmentStatus | null,
+) => {
+  const color = selectedRouteStatus === "delayed"
+    ? "#f59e0b"
+    : selectedRouteStatus === "early"
+      ? "#34d399"
+      : selectedRouteStatus === "completed"
+        ? "#10b981"
+        : selectedRouteStatus === "on-track"
+          ? "#22d3ee"
+          : "#64748b";
 
   const symbol = getMarkerSymbol(asset);
-  const hasExceptionBadge = symbol !== "•";
+  const hasExceptionBadge = selectedRouteStatus !== null && symbol !== "•";
   const badgeColor = asset.riskStatus === "Critical"
     ? "#fb7185"
     : asset.riskStatus === "Warning"
@@ -696,6 +802,44 @@ const parseEtaHours = (eta: string) => {
   return Math.max(0.5, hours + (minutes / 60));
 };
 
+const normalizeName = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+const getWaypointIndexByName = (waypoints: RouteWaypoint[], targetName: string) => {
+  const normalizedTarget = normalizeName(targetName);
+  return waypoints.findIndex((waypoint) => {
+    const normalizedWaypoint = normalizeName(waypoint.name);
+    return normalizedWaypoint.includes(normalizedTarget) || normalizedTarget.includes(normalizedWaypoint);
+  });
+};
+
+const applyRouteProgressAnchors = (waypoints: RouteWaypoint[], asset: LogisticsAsset) => {
+  if (waypoints.length <= 1) return waypoints;
+
+  let startIndex = 0;
+  let endIndex = waypoints.length - 1;
+  const origin = asset.routeProgress?.origin;
+  const destination = asset.routeProgress?.destination;
+
+  if (origin) {
+    const originIndex = getWaypointIndexByName(waypoints, origin);
+    if (originIndex >= 0) startIndex = originIndex;
+  }
+
+  if (destination) {
+    const destinationIndex = getWaypointIndexByName(waypoints, destination);
+    if (destinationIndex >= startIndex) endIndex = destinationIndex;
+  }
+
+  const slicedWaypoints = waypoints.slice(startIndex, endIndex + 1);
+  if (slicedWaypoints.length <= 1) return waypoints;
+
+  return slicedWaypoints.map((waypoint, index) => {
+    if (index === 0) return { ...waypoint, nodeType: "Origin" as const };
+    if (index === slicedWaypoints.length - 1) return { ...waypoint, nodeType: "Destination" as const };
+    return waypoint;
+  });
+};
+
 const hashId = (input: string) => {
   let hash = 0;
   for (let index = 0; index < input.length; index += 1) {
@@ -736,7 +880,7 @@ const getRouteProfileForAsset = (asset: LogisticsAsset, nodes: LogisticsNode[]):
   if (routeLaneId && controlledRoutesByLaneId[routeLaneId]) {
     return {
       laneId: routeLaneId,
-      waypoints: controlledRoutesByLaneId[routeLaneId],
+      waypoints: applyRouteProgressAnchors(controlledRoutesByLaneId[routeLaneId], asset),
     };
   }
 
@@ -792,7 +936,97 @@ const interpolatePointAlongRoute = (points: Coordinate[], progress: number): { c
   return { coordinate: points[points.length - 1], legLabel: `Leg ${segments.length} of ${segments.length}` };
 };
 
-const computeProgress = (asset: LogisticsAsset, tick: number) => {
+const getCompletedRouteCoordinates = (points: Coordinate[], progress: number): Coordinate[] => {
+  if (points.length <= 1) return points;
+
+  const boundedProgress = Math.min(1, Math.max(0, progress));
+  if (boundedProgress <= 0) return [points[0]];
+  if (boundedProgress >= 1) return points;
+
+  const segments = points.slice(0, -1).map((point, index) => {
+    const next = points[index + 1];
+    return {
+      start: point,
+      end: next,
+      distance: distanceBetween(point, next),
+    };
+  });
+
+  const totalDistance = segments.reduce((sum, segment) => sum + segment.distance, 0);
+  if (totalDistance <= 0) return [points[0]];
+
+  let targetDistance = boundedProgress * totalDistance;
+  const completedCoordinates: Coordinate[] = [points[0]];
+
+  for (const segment of segments) {
+    if (targetDistance >= segment.distance) {
+      completedCoordinates.push(segment.end);
+      targetDistance -= segment.distance;
+      continue;
+    }
+
+    const ratio = segment.distance === 0 ? 0 : targetDistance / segment.distance;
+    completedCoordinates.push([
+      Number((segment.start[0] + ((segment.end[0] - segment.start[0]) * ratio)).toFixed(5)),
+      Number((segment.start[1] + ((segment.end[1] - segment.start[1]) * ratio)).toFixed(5)),
+    ]);
+    break;
+  }
+
+  return completedCoordinates;
+};
+
+const deriveStatusFromEtaVariance = (asset: LogisticsAsset): TransitShipmentStatus | null => {
+  const planned = asset.routeProgress?.plannedArrivalIso;
+  const projected = asset.routeProgress?.projectedArrivalIso;
+
+  if (!planned || !projected) return null;
+
+  const plannedTimestamp = Date.parse(planned);
+  const projectedTimestamp = Date.parse(projected);
+  if (Number.isNaN(plannedTimestamp) || Number.isNaN(projectedTimestamp)) return null;
+
+  const varianceMinutes = (projectedTimestamp - plannedTimestamp) / 60000;
+  if (Math.abs(varianceMinutes) <= 15) return "on-track";
+  return varianceMinutes < 0 ? "early" : "delayed";
+};
+
+const getSelectedShipmentStatus = (asset: LogisticsAsset): TransitShipmentStatus => {
+  if (asset.routeProgress?.status) return asset.routeProgress.status;
+
+  const etaStatus = deriveStatusFromEtaVariance(asset);
+  if (etaStatus) return etaStatus;
+
+  if (getTruckStatus(asset) === "Delivered") return "completed";
+  if (/delay|hold/i.test(asset.recentEvents.join(" "))) return "delayed";
+  if (asset.riskStatus === "Critical") return "delayed";
+  return "on-track";
+};
+
+const getStatusLabel = (status: TransitShipmentStatus) => {
+  if (status === "on-track") return "On track";
+  if (status === "delayed") return "Delayed";
+  if (status === "early") return "Early";
+  return "Completed";
+};
+
+const computeProgress = (asset: LogisticsAsset, tick: number, routeWaypoints: RouteWaypoint[]) => {
+  const totalSegments = Math.max(1, routeWaypoints.length - 1);
+
+  if (asset.routeProgress?.status === "completed") return 1;
+
+  if (typeof asset.routeProgress?.completedRouteSegments === "number") {
+    const boundedCompleted = Math.min(totalSegments, Math.max(0, asset.routeProgress.completedRouteSegments));
+    return Math.min(0.99, boundedCompleted / totalSegments);
+  }
+
+  if (asset.routeProgress?.currentNode) {
+    const currentNodeIndex = getWaypointIndexByName(routeWaypoints, asset.routeProgress.currentNode);
+    if (currentNodeIndex >= 0) {
+      return Math.min(0.99, Math.max(0, currentNodeIndex / totalSegments));
+    }
+  }
+
   const seed = hashId(asset.id);
   const baseProgress = (seed % 42) / 100;
   const etaHours = parseEtaHours(asset.eta);
@@ -809,7 +1043,7 @@ export default function TransitMap() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [criticalOnly, setCriticalOnly] = useState(false);
-  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(state.assets[0]?.id ?? null);
+  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
@@ -899,12 +1133,19 @@ export default function TransitMap() {
 
   const selectedAsset = filteredAssets.find((asset) => asset.id === selectedAssetId) ?? null;
 
+  useEffect(() => {
+    if (!selectedAssetId) return;
+    const stillVisible = filteredAssets.some((asset) => asset.id === selectedAssetId);
+    if (!stillVisible) setSelectedAssetId(null);
+  }, [filteredAssets, selectedAssetId]);
+
   const routeSnapshots = useMemo(() => filteredAssets.map((asset) => {
     const routeProfile = getRouteProfileForAsset(asset, state.nodes);
     const waypoints = routeProfile.waypoints.map((waypoint) => waypoint.coordinate);
-    const progress = computeProgress(asset, tick);
+    const progress = computeProgress(asset, tick, routeProfile.waypoints);
     const point = interpolatePointAlongRoute(waypoints, progress);
     const destination = waypoints[waypoints.length - 1] ?? asset.location.coordinates;
+    const routeStatus = getSelectedShipmentStatus(asset);
 
     return {
       asset,
@@ -919,18 +1160,25 @@ export default function TransitMap() {
       routeWaypoints: routeProfile.waypoints,
       waypoints,
       progress,
+      routeStatus,
+      completedWaypoints: getCompletedRouteCoordinates(waypoints, progress),
       truckCoordinate: point.coordinate,
       currentLeg: point.legLabel,
       destination,
     };
   }), [filteredAssets, state.nodes, tick]);
 
+  const selectedSnapshot = routeSnapshots.find((snapshot) => snapshot.asset.id === selectedAssetId) ?? null;
+  const hasSelectedShipment = selectedSnapshot !== null;
+
   const routeMilestones = useMemo(() => {
     const milestoneMap = new Map<string, RouteMilestone>();
+    const routeScope = selectedSnapshot ? [selectedSnapshot] : routeSnapshots;
 
-    routeSnapshots.forEach(({ asset, laneId, routeWaypoints }) => {
+    routeScope.forEach(({ asset, laneId, routeWaypoints }) => {
       routeWaypoints.forEach((waypoint, index) => {
         if (!waypoint.nodeType || waypoint.nodeType === "Hub") return;
+        if (!selectedSnapshot && waypoint.nodeType !== "Origin") return;
         const coordinate = waypoint.coordinate;
         const roundedKey = `${coordinate[0].toFixed(2)}:${coordinate[1].toFixed(2)}`;
         const key = `${laneId}:${roundedKey}:${waypoint.nodeType}:${index}`;
@@ -953,7 +1201,7 @@ export default function TransitMap() {
     });
 
     return Array.from(milestoneMap.values());
-  }, [routeSnapshots, state.nodes]);
+  }, [routeSnapshots, selectedSnapshot]);
 
   return (
     <div className="space-y-6">
@@ -975,22 +1223,47 @@ export default function TransitMap() {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
 
-              {routeSnapshots.map(({ asset, waypoints, laneId, mode }) => (
+              {routeSnapshots.map(({ asset, waypoints, laneId, mode, routeStatus }) => {
+                const isSelectedRoute = hasSelectedShipment && selectedSnapshot?.asset.id === asset.id;
+                const routeStyle = isSelectedRoute
+                  ? getSelectedRouteStyle(routeStatus, mode)
+                  : getOverviewRouteStyle(mode);
+
+                return (
                 <Polyline
                   key={`route-${asset.id}`}
                   positions={waypoints}
-                  pathOptions={getRouteStyle(asset.riskStatus, getMarkerSymbol(asset) !== "•", mode)}
+                  pathOptions={routeStyle}
                   eventHandlers={{ click: () => setSelectedAssetId(asset.id) }}
                 >
                   <Popup>
                     <div className="min-w-[220px] text-sm text-slate-700">
                       <p className="font-semibold text-slate-900">Lane {laneId}</p>
                       <p className="mt-1 text-slate-600">Shipment {asset.id}</p>
-                      <p className="mt-2 text-slate-600">Route posture: {getTruckStatus(asset)}</p>
+                      <p className="mt-2 text-slate-600">
+                        Route posture: {isSelectedRoute ? getStatusLabel(routeStatus) : "Overview (select shipment)"}
+                      </p>
                     </div>
                   </Popup>
                 </Polyline>
-              ))}
+                );
+              })}
+
+              {selectedSnapshot && selectedSnapshot.completedWaypoints.length > 1 ? (
+                <Polyline
+                  key={`completed-${selectedSnapshot.asset.id}`}
+                  positions={selectedSnapshot.completedWaypoints}
+                  pathOptions={getCompletedSegmentStyle(selectedSnapshot.mode)}
+                >
+                  <Popup>
+                    <div className="min-w-[220px] text-sm text-slate-700">
+                      <p className="font-semibold text-slate-900">Completed segment</p>
+                      <p className="mt-1 text-slate-600">Shipment {selectedSnapshot.asset.id}</p>
+                      <p className="mt-2 text-slate-600">{Math.round(selectedSnapshot.progress * 100)}% of route traveled</p>
+                    </div>
+                  </Popup>
+                </Polyline>
+              ) : null}
 
               {routeMilestones.map((milestone) => (
                 <Marker
@@ -1009,11 +1282,15 @@ export default function TransitMap() {
                 </Marker>
               ))}
 
-              {routeSnapshots.map(({ asset, destination, progress, currentLeg, truckCoordinate, mode }) => (
+              {routeSnapshots.map(({ asset, destination, progress, currentLeg, truckCoordinate, mode, routeStatus }) => {
+                const isSelectedRoute = hasSelectedShipment && selectedSnapshot?.asset.id === asset.id;
+                const iconStatus = isSelectedRoute ? routeStatus : null;
+
+                return (
                 <Marker
                   key={`truck-${asset.id}`}
                   position={truckCoordinate}
-                  icon={getVehicleIcon(asset, selectedAssetId === asset.id, mode)}
+                  icon={getVehicleIcon(asset, selectedAssetId === asset.id, mode, iconStatus)}
                   eventHandlers={{ click: () => setSelectedAssetId(asset.id) }}
                   zIndexOffset={selectedAssetId === asset.id ? 1000 : 700}
                 >
@@ -1023,7 +1300,7 @@ export default function TransitMap() {
                       <p className="mt-1 text-slate-600">{asset.assetType} · {asset.carrier}</p>
                       <p className="mt-2 text-slate-600">{asset.location.city}, {asset.location.state} → {asset.destination}</p>
                       <div className="mt-3 space-y-1 text-slate-600">
-                        <p>Status: <span className="font-medium text-slate-900">{getTruckStatus(asset)}</span></p>
+                        <p>Status: <span className="font-medium text-slate-900">{isSelectedRoute ? getStatusLabel(routeStatus) : "Overview"}</span></p>
                         <p>{currentLeg} · {Math.round(progress * 100)}% complete</p>
                         <p>ETA: {asset.eta}</p>
                         <p>Active signal: {getActiveAlertSummary(asset)}</p>
@@ -1033,7 +1310,8 @@ export default function TransitMap() {
                     </div>
                   </Popup>
                 </Marker>
-              ))}
+                );
+              })}
 
             </MapContainer>
           </div>
