@@ -36,7 +36,7 @@ type RouteProfile = {
   laneId: string;
   waypoints: RouteWaypoint[];
 };
-type VehicleMode = "truck" | "rail" | "ocean";
+type VehicleMode = "truck" | "rail" | "ocean" | "air";
 
 const SEATTLE_CHICAGO_ASSET_ID = "TR-SEA-CHI-90";
 const CHICAGO_ATLANTA_ASSET_ID = "TR-CHI-ATL-65";
@@ -46,6 +46,7 @@ const NYC_NEWARK_ASSET_ID = "TR-NYC-EWR-95";
 const NYC_BOSTON_ASSET_ID = "TR-NYC-BOS-95";
 const LOS_ANGELES_ATLANTA_RAIL_ASSET_ID = "RC-LA-ATL-40";
 const LOS_ANGELES_SHANGHAI_OCEAN_ASSET_ID = "CT-LA-SHA-88";
+const ATLANTA_FRANKFURT_AIR_ASSET_ID = "CT-ATL-FRA-74";
 
 const controlledRouteIdByAssetId: Record<string, string> = {
   "TR-SEA-12": "seattle-boise",
@@ -57,10 +58,12 @@ const controlledRouteIdByAssetId: Record<string, string> = {
   [NYC_BOSTON_ASSET_ID]: "nyc-boston",
   [LOS_ANGELES_ATLANTA_RAIL_ASSET_ID]: "los-angeles-atlanta-rail",
   [LOS_ANGELES_SHANGHAI_OCEAN_ASSET_ID]: "los-angeles-shanghai-ocean",
+  [ATLANTA_FRANKFURT_AIR_ASSET_ID]: "atlanta-frankfurt-air",
 };
 
 const railLaneIds = new Set(["los-angeles-atlanta-rail"]);
 const oceanLaneIds = new Set(["los-angeles-shanghai-ocean"]);
+const airLaneIds = new Set(["atlanta-frankfurt-air"]);
 
 const isDisabledLocalLaneAsset = (asset: LogisticsAsset) => {
   const originText = `${asset.location.city}, ${asset.location.state}`.toLowerCase();
@@ -267,6 +270,26 @@ const losAngelesToShanghaiOceanDemoAsset: LogisticsAsset = {
   labelId: "LBL-5888",
 };
 
+const atlantaToFrankfurtAirDemoAsset: LogisticsAsset = {
+  id: ATLANTA_FRANKFURT_AIR_ASSET_ID,
+  assetType: "Container",
+  carrier: "SkyBridge Cargo",
+  customer: "Apex Retail",
+  location: { city: "Atlanta", state: "GA", coordinates: [33.6407, -84.4277] },
+  destination: "Frankfurt, Germany",
+  eta: "9h 15m",
+  labelsPresent: 88,
+  labelsActive: 76,
+  labelsIdle: 7,
+  labelsOffline: 5,
+  negativeAlerts24h: 2,
+  negativeAlertRate: 0.0227,
+  riskStatus: "Warning",
+  battery: { healthy: 73, warning: 18, critical: 9 },
+  recentEvents: ["Delay Hold", "Shipment Departed"],
+  labelId: "LBL-7474",
+};
+
 const seattleToBoiseRoute: RouteWaypoint[] = [
   { name: "Seattle, WA", coordinate: [47.6062, -122.3321], nodeType: "Origin" },
   { name: "Snoqualmie Pass, WA", coordinate: [47.3923, -121.4001] },
@@ -414,6 +437,22 @@ const losAngelesToShanghaiOceanRoute: RouteWaypoint[] = [
   { name: "Shanghai, China", coordinate: [31.2304, -238.5263], nodeType: "Destination" },
 ];
 
+const atlantaToFrankfurtAirRoute: RouteWaypoint[] = [
+  { name: "Atlanta Hartsfield-Jackson, GA", coordinate: [33.6407, -84.4277], nodeType: "Origin" },
+  { name: "Greenville-Spartanburg Area, SC", coordinate: [34.8957, -82.2189] },
+  { name: "Charlotte Area, NC", coordinate: [35.2144, -80.9473] },
+  { name: "Richmond Area, VA", coordinate: [37.5407, -77.436] },
+  { name: "New York Oceanic Departure Area", coordinate: [40.7, -72.5] },
+  { name: "Newfoundland Approach", coordinate: [47.5, -55] },
+  { name: "North Atlantic Track West", coordinate: [51, -45] },
+  { name: "North Atlantic Track Midpoint", coordinate: [53, -35] },
+  { name: "North Atlantic Track East", coordinate: [52.5, -25] },
+  { name: "Ireland Approach", coordinate: [52.5, -10] },
+  { name: "Irish Sea / UK Crossing", coordinate: [52, -3] },
+  { name: "Belgium / Western Europe Approach", coordinate: [50.9, 4.5] },
+  { name: "Frankfurt Airport, Germany", coordinate: [50.0379, 8.5622], nodeType: "Destination" },
+];
+
 const controlledRoutesByLaneId: Record<string, RouteWaypoint[]> = {
   "seattle-boise": seattleToBoiseRoute,
   "seattle-chicago": seattleToChicagoRoute,
@@ -424,6 +463,7 @@ const controlledRoutesByLaneId: Record<string, RouteWaypoint[]> = {
   "nyc-boston": nycToBostonRoute,
   "los-angeles-atlanta-rail": losAngelesToAtlantaRailRoute,
   "los-angeles-shanghai-ocean": losAngelesToShanghaiOceanRoute,
+  "atlanta-frankfurt-air": atlantaToFrankfurtAirRoute,
 };
 
 const DESTINATION_COORDINATES: Record<string, Coordinate> = {
@@ -442,6 +482,7 @@ const DESTINATION_COORDINATES: Record<string, Coordinate> = {
   "Boston, MA": [42.3601, -71.0589],
   "Orlando Fulfillment": [28.5383, -81.3792],
   "Shanghai, China": [31.2304, 121.4737],
+  "Frankfurt, Germany": [50.1109, 8.6821],
 };
 
 const getRouteStyle = (riskStatus: LogisticsAsset["riskStatus"], hasIssue: boolean, mode: VehicleMode) => {
@@ -449,8 +490,10 @@ const getRouteStyle = (riskStatus: LogisticsAsset["riskStatus"], hasIssue: boole
     ? "11 6"
     : mode === "ocean"
       ? "1 8 12 8"
+      : mode === "air"
+        ? "1 12"
       : "";
-  const modeLineCap: "round" | "butt" = mode === "ocean" ? "round" : "butt";
+  const modeLineCap: "round" | "butt" = (mode === "ocean" || mode === "air") ? "round" : "butt";
 
   if (riskStatus === "Critical" || hasIssue) {
     return { color: "#fb7185", weight: 4, opacity: 0.95, dashArray: modeDash, lineCap: modeLineCap };
@@ -547,6 +590,10 @@ const getVehicleIcon = (asset: LogisticsAsset, isSelected: boolean, mode: Vehicl
     : mode === "ocean"
       ? `<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false" style="display:block;fill:#020617;">
         <path d="M3 15.8h18c0 2.6-2.2 4.2-4.4 4.2-1.2 0-2.2-.4-3.1-1.2-.9.8-2 1.2-3.2 1.2-1.2 0-2.3-.4-3.2-1.2-.9.8-1.9 1.2-3.1 1.2C5.2 20 3 18.4 3 15.8zm3.1-1.6L7.8 8h8.4l1.7 6.2H6.1zM10 5h4.4c.7 0 1.3.6 1.3 1.3V7H8.7V6.3C8.7 5.6 9.3 5 10 5z"/>
+      </svg>`
+      : mode === "air"
+        ? `<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false" style="display:block;fill:#020617;">
+        <path d="M21 11.5l-8.4-2.9L9.3 3.2a1 1 0 0 0-1.8.2v4.5L3.8 6.7a1 1 0 0 0-1.3.8v1.1a1 1 0 0 0 .6.9l4.4 2.1v3l-2.1 1.2a1 1 0 0 0-.5.9v.6c0 .7.7 1.2 1.3.9l3.2-1.4 2.2 3.2c.3.4.9.5 1.4.3l.7-.4a1 1 0 0 0 .4-1.3L13 15.2l8-1.9a1 1 0 0 0 .8-1v-.8a1 1 0 0 0-.8-1z"/>
       </svg>`
       : `<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false" style="display:block;fill:#020617;">
         <path d="M3 7h11v7h1.6c.7 0 1.3.3 1.7.8l2.7 3.2V21h-1.8a2.7 2.7 0 0 1-5.4 0H9.2a2.7 2.7 0 0 1-5.4 0H2v-3h1V7zm12 2v5h4.2l-2-2.4c-.2-.4-.6-.6-1-.6H15zM6.5 20a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4zm9 0a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4z"/>
@@ -739,7 +786,11 @@ export default function TransitMap() {
       ? withLosAngelesAtlantaRail
       : [...withLosAngelesAtlantaRail, losAngelesToShanghaiOceanDemoAsset];
 
-    return withLosAngelesShanghaiOcean;
+    const withAtlantaFrankfurtAir = withLosAngelesShanghaiOcean.some((asset) => asset.id === ATLANTA_FRANKFURT_AIR_ASSET_ID)
+      ? withLosAngelesShanghaiOcean
+      : [...withLosAngelesShanghaiOcean, atlantaToFrankfurtAirDemoAsset];
+
+    return withAtlantaFrankfurtAir;
   }, [state.assets]);
 
   const filteredAssets = useMemo(() => {
@@ -779,7 +830,9 @@ export default function TransitMap() {
         ? "rail" as const
         : oceanLaneIds.has(routeProfile.laneId)
           ? "ocean" as const
-          : "truck" as const,
+          : airLaneIds.has(routeProfile.laneId)
+            ? "air" as const
+            : "truck" as const,
       routeWaypoints: routeProfile.waypoints,
       waypoints,
       progress,
