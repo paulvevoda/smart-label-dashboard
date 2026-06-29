@@ -1,5 +1,5 @@
 import { demoNodeCatalog, demoPresets } from "./demoState";
-import { getRiskStatus } from "./mockDataHelpers";
+import { DEFAULT_SENSOR_THRESHOLDS, getRiskStatusFromRate } from "./thresholdRules";
 import type { Alert, AlertSeverity, DemoActionLog, DemoPresetName, DemoState, LogisticsAsset, LogisticsNode, TransitLane } from "./types";
 
 export type BreakdownItem = {
@@ -200,7 +200,10 @@ export const applyDemoPreset = (state: DemoState, preset: DemoPresetName): DemoS
   ].slice(0, 8),
 });
 
-export const calculateDemoRisk = (negativeAlerts: number, labelsPresent: number) => getRiskStatus(negativeAlerts, labelsPresent);
+export const calculateDemoRisk = (negativeAlerts: number, labelsPresent: number, state: DemoState) => {
+  if (labelsPresent <= 0) return "Normal" as const;
+  return getRiskStatusFromRate(negativeAlerts / labelsPresent, state.sensorThresholds);
+};
 
 export const simulateAlert = (state: DemoState, assetId: string, eventType: Alert["eventType"], severity: AlertSeverity): DemoState => {
   const asset = state.assets.find((entry) => entry.id === assetId);
@@ -316,6 +319,7 @@ export const resetDemoState = (): DemoState => ({
     { id: "EV-001", timestamp: "2 min ago", labelId: "LBL-2048", shipmentId: "SHP-1001", assetId: "TR-142", eventType: "Temperature Alert", severity: "Warning", status: "Active", description: "Cold chain threshold exceeded" },
   ],
   activityLog: [{ id: "act-reset", title: "Demo reset", detail: "Default network state restored", timestamp: "just now" }],
+  sensorThresholds: { ...DEFAULT_SENSOR_THRESHOLDS },
 });
 
 export const createDemoActivityLogEntry = (title: string, detail: string): DemoActionLog => ({ id: `act-${Date.now()}`, title, detail, timestamp: "just now" });

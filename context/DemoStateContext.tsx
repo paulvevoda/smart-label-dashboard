@@ -3,7 +3,8 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { initialDemoState } from "@/data/demoState";
 import { applyDemoPreset, generateRandomDemoActivity, resetDemoState, simulateAlert, simulateBatteryWarning, simulateShipmentDelay } from "@/data/demoStateHelpers";
-import type { Alert, DemoPresetName, DemoState, LogisticsAsset, LogisticsNode, TransitLane } from "@/data/types";
+import { getRiskStatusFromRate, getSeverityFromThresholds } from "@/data/thresholdRules";
+import type { Alert, DemoPresetName, DemoState, LogisticsAsset, LogisticsNode, SensorThresholds, TransitLane } from "@/data/types";
 
 const DemoStateContext = createContext<{
   state: DemoState;
@@ -27,6 +28,8 @@ const DemoStateContext = createContext<{
   clearActivityLog: () => void;
   resolveAlerts: () => void;
   reset: () => void;
+  setSensorThresholds: (updates: Partial<SensorThresholds>) => void;
+  resetSensorThresholds: () => void;
   selectedItem: { kind: "node" | "asset" | "lane" | null; id: string | null };
   setSelectedItem: (value: { kind: "node" | "asset" | "lane" | null; id: string | null }) => void;
 } | null>(null);
@@ -147,7 +150,14 @@ export function DemoStateProvider({ children }: { children: React.ReactNode }) {
   };
 
   const handleSimulateAlert = (assetId: string, eventType: Alert["eventType"], severity: Alert["severity"]) => {
-    setState((current) => simulateAlert(current, assetId, eventType, severity));
+    setState((current) => {
+      const evaluatedSeverity = getSeverityFromThresholds(eventType, current.sensorThresholds);
+      const preferredSeverity = eventType === "Shipment Departed" || eventType === "Shipment Arrived" || eventType === "Shipment Delivered"
+        ? severity
+        : evaluatedSeverity;
+
+      return simulateAlert(current, assetId, eventType, preferredSeverity);
+    });
   };
 
   const handleSimulateBatteryWarning = (assetId: string) => {
@@ -180,6 +190,53 @@ export function DemoStateProvider({ children }: { children: React.ReactNode }) {
     setState(resetDemoState());
   };
 
+  const setSensorThresholds = (updates: Partial<SensorThresholds>) => {
+    setState((current) => {
+      const nextThresholds = { ...current.sensorThresholds, ...updates };
+
+      const updatedAssets = current.assets.map((asset) => {
+        const nextRate = asset.labelsPresent > 0 ? asset.negativeAlerts24h / asset.labelsPresent : 0;
+        return {
+          ...asset,
+          negativeAlertRate: nextRate,
+          riskStatus: getRiskStatusFromRate(nextRate, nextThresholds),
+        };
+      });
+
+      const updatedLanes = current.lanes.map((lane) => {
+        const sampleRate = lane.assetsInTransit <= 0 ? 0 : lane.recentAlertActivity.length / Math.max(lane.assetsInTransit * 4, 1);
+        return {
+          ...lane,
+          riskStatus: getRiskStatusFromRate(sampleRate, nextThresholds),
+        };
+      });
+
+      const updatedAlerts = current.alerts.map((alert) => ({
+        ...alert,
+        severity: getSeverityFromThresholds(alert.eventType, nextThresholds),
+      }));
+
+      const updatedSensorEvents = current.sensorEvents.map((event) => ({
+        ...event,
+        severity: getSeverityFromThresholds(event.eventType, nextThresholds),
+      }));
+
+      return {
+        ...current,
+        sensorThresholds: nextThresholds,
+        assets: updatedAssets,
+        lanes: updatedLanes,
+        alerts: updatedAlerts,
+        sensorEvents: updatedSensorEvents,
+      };
+    });
+  };
+
+  const resetSensorThresholds = () => {
+    const defaultThresholds = resetDemoState().sensorThresholds;
+    setSensorThresholds(defaultThresholds);
+  };
+
   const value = useMemo(() => ({
     state,
     setPreset,
@@ -202,6 +259,8 @@ export function DemoStateProvider({ children }: { children: React.ReactNode }) {
     clearActivityLog,
     resolveAlerts,
     reset: handleReset,
+    setSensorThresholds,
+    resetSensorThresholds,
     selectedItem,
     setSelectedItem,
   }), [state, selectedItem]);

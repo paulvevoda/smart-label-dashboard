@@ -11,10 +11,12 @@ import SensorThresholdSettings from "@/components/SensorThresholdSettings";
 import SettingsActions from "@/components/SettingsActions";
 import UserManagementSettings from "@/components/UserManagementSettings";
 import PageHeader from "@/components/ui/PageHeader";
+import { useDemoState } from "@/context/DemoStateContext";
 import { mockData } from "@/data";
 
 export default function SettingsPage() {
   const [feedback, setFeedback] = useState("");
+  const { state, setSensorThresholds, resetSensorThresholds } = useDemoState();
 
   return (
     <AppShell title="Settings" description="Configure company preferences, alert thresholds, notification rules, integrations, and platform access.">
@@ -23,14 +25,27 @@ export default function SettingsPage() {
 
         <CompanySettingsCard settings={mockData.settings.company} />
         <NotificationRulesSettings rules={mockData.settings.notificationRules} />
-        <SensorThresholdSettings thresholds={mockData.settings.sensorThresholds} />
+        <SensorThresholdSettings
+          thresholds={state.sensorThresholds}
+          onThresholdChange={(updates) => {
+            setSensorThresholds(updates);
+            setFeedback("Sensor thresholds updated across shipments, map events, and badges.");
+          }}
+          onResetThresholds={() => {
+            resetSensorThresholds();
+            setFeedback("Sensor thresholds restored to demo defaults.");
+          }}
+        />
         <UserManagementSettings users={mockData.settings.users} />
         <IntegrationSettings integrations={mockData.settings.integrations} />
         <ApiSettingsCard settings={mockData.settings.api} />
         <BillingSettingsCard settings={mockData.settings.billing} />
         <SettingsActions
           onSave={() => setFeedback("Demo settings saved locally.")}
-          onReset={() => setFeedback("Demo settings reset to defaults.")}
+          onReset={() => {
+            resetSensorThresholds();
+            setFeedback("Demo settings reset to defaults.");
+          }}
           feedback={feedback}
         />
       </div>

@@ -1,5 +1,9 @@
+"use client";
+
 import Card from "@/components/ui/Card";
 import StatusBadge from "@/components/ui/StatusBadge";
+import { useDemoState } from "@/context/DemoStateContext";
+import { getThresholdDisplay } from "@/data/thresholdRules";
 import type { SmartLabel } from "@/data/types";
 import type { ComponentProps } from "react";
 
@@ -8,6 +12,27 @@ type EnvironmentalReadingsProps = {
 };
 
 export default function EnvironmentalReadings({ labels }: EnvironmentalReadingsProps) {
+  const { state } = useDemoState();
+  const thresholdDisplay = getThresholdDisplay(state.sensorThresholds);
+
+  const temperatureValue = 7.2;
+  const humidityValue = 58;
+  const shockValue = 2.8;
+  const packageRemovedDuration = 2;
+  const batteryValue = labels[0]?.batteryPercentage ?? 80;
+
+  const getToneFromCeiling = (value: number, warning: number, exception: number): ComponentProps<typeof StatusBadge>["tone"] => {
+    if (value >= exception) return "critical";
+    if (value >= warning) return "warning";
+    return "normal";
+  };
+
+  const getToneFromFloor = (value: number, warningFloor: number, exceptionFloor: number): ComponentProps<typeof StatusBadge>["tone"] => {
+    if (value <= exceptionFloor) return "critical";
+    if (value <= warningFloor) return "warning";
+    return "normal";
+  };
+
   const readingCards: Array<{
     title: string;
     current: string;
@@ -15,17 +40,57 @@ export default function EnvironmentalReadings({ labels }: EnvironmentalReadingsP
     status: string;
     tone: ComponentProps<typeof StatusBadge>["tone"];
   }> = [
-    { title: "Temperature", current: "7.2°C", threshold: "2°C–8°C", status: "Normal", tone: "normal" },
-    { title: "Humidity", current: "58%", threshold: "45%–65%", status: "Normal", tone: "normal" },
-    { title: "Shock", current: "2.8g", threshold: "≤5.0g", status: "Normal", tone: "normal" },
-    { title: "Package removed", current: "Low", threshold: "<4 hrs", status: "Normal", tone: "normal" },
+    {
+      title: "Temperature",
+      current: `${temperatureValue.toFixed(1)}C`,
+      threshold: thresholdDisplay.temperature,
+      status: temperatureValue >= state.sensorThresholds.temperatureExceptionC
+        ? "Exception"
+        : temperatureValue >= state.sensorThresholds.temperatureWarningC
+          ? "Warning"
+          : "Normal",
+      tone: getToneFromCeiling(temperatureValue, state.sensorThresholds.temperatureWarningC, state.sensorThresholds.temperatureExceptionC),
+    },
+    {
+      title: "Humidity",
+      current: `${humidityValue}%`,
+      threshold: thresholdDisplay.humidity,
+      status: humidityValue >= state.sensorThresholds.humidityExceptionPct
+        ? "Exception"
+        : humidityValue >= state.sensorThresholds.humidityWarningPct
+          ? "Warning"
+          : "Normal",
+      tone: getToneFromCeiling(humidityValue, state.sensorThresholds.humidityWarningPct, state.sensorThresholds.humidityExceptionPct),
+    },
+    {
+      title: "Shock",
+      current: `${shockValue.toFixed(1)}g`,
+      threshold: thresholdDisplay.shock,
+      status: shockValue >= state.sensorThresholds.shockExceptionG
+        ? "Exception"
+        : shockValue >= state.sensorThresholds.shockWarningG
+          ? "Warning"
+          : "Normal",
+      tone: getToneFromCeiling(shockValue, state.sensorThresholds.shockWarningG, state.sensorThresholds.shockExceptionG),
+    },
+    {
+      title: "Package removed",
+      current: `${packageRemovedDuration}h window`,
+      threshold: thresholdDisplay.packageRemoved,
+      status: packageRemovedDuration >= state.sensorThresholds.packageRemovedExceptionHours
+        ? "Exception"
+        : packageRemovedDuration >= state.sensorThresholds.packageRemovedWarningHours
+          ? "Warning"
+          : "Normal",
+      tone: getToneFromCeiling(packageRemovedDuration, state.sensorThresholds.packageRemovedWarningHours, state.sensorThresholds.packageRemovedExceptionHours),
+    },
     { title: "Tamper", current: "No tamper detected", threshold: "Seal intact", status: "Normal", tone: "normal" },
     {
       title: "Battery",
-      current: `${labels[0]?.batteryPercentage ?? 80}%`,
-      threshold: "≥40%",
+      current: `${batteryValue}%`,
+      threshold: thresholdDisplay.battery,
       status: labels[0]?.batteryStatus ?? "Healthy",
-      tone: labels[0]?.batteryStatus === "Critical" ? "critical" : labels[0]?.batteryStatus === "Warning" ? "warning" : "normal",
+      tone: getToneFromFloor(batteryValue, state.sensorThresholds.batteryWarningPct, state.sensorThresholds.batteryExceptionPct),
     },
   ];
 

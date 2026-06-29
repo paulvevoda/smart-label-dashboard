@@ -1,4 +1,5 @@
 import { mockData } from "./mockData";
+import { DEFAULT_SENSOR_THRESHOLDS, getRiskStatusFromRate } from "./thresholdRules";
 import type {
   Alert,
   AlertSeverity,
@@ -25,11 +26,7 @@ import type {
 
 export const getRiskStatus = (negativeAlerts: number, labelsPresent: number): RiskStatus => {
   if (labelsPresent <= 0) return "Normal";
-  const rate = negativeAlerts / labelsPresent;
-
-  if (rate > 0.08) return "Critical";
-  if (rate > 0.02) return "Warning";
-  return "Normal";
+  return getRiskStatusFromRate(negativeAlerts / labelsPresent, DEFAULT_SENSOR_THRESHOLDS);
 };
 
 export const enrichAssetsWithRisk = (assets: LogisticsAsset[]): LogisticsAsset[] => {

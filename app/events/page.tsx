@@ -7,6 +7,7 @@ import EventsControls from "@/components/EventsControls";
 import EventsTable from "@/components/EventsTable";
 import PageHeader from "@/components/ui/PageHeader";
 import { useDemoState } from "@/context/DemoStateContext";
+import { getSeverityFromThresholds } from "@/data/thresholdRules";
 import type { AlertSeverity, AlertStatus, SensorEventType } from "@/data/types";
 
 type EventRow = {
@@ -35,7 +36,7 @@ export default function EventsPage() {
     const alerts: EventRow[] = state.alerts.map((alert) => ({
       ...alert,
       eventType: alert.eventType,
-      severity: alert.severity,
+      severity: getSeverityFromThresholds(alert.eventType, state.sensorThresholds),
       status: alert.status,
       description: alert.recommendedAction,
       customer: alert.customer,
@@ -44,12 +45,13 @@ export default function EventsPage() {
     }));
     const sensorEvents: EventRow[] = state.sensorEvents.map((event) => ({
       ...event,
+      severity: getSeverityFromThresholds(event.eventType, state.sensorThresholds),
       description: event.description,
       currentLocation: "Network monitoring",
       recommendedAction: event.description,
     }));
     return [...alerts, ...sensorEvents];
-  }, [state.alerts, state.sensorEvents]);
+  }, [state.alerts, state.sensorEvents, state.sensorThresholds]);
 
   const filteredEvents = useMemo<EventRow[]>(() => {
     const normalizedSearch = search.toLowerCase();

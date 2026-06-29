@@ -1,4 +1,7 @@
-import { notFound } from "next/navigation";
+"use client";
+
+import { useMemo } from "react";
+import { useParams } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import ActiveAlertsPanel from "@/components/ActiveAlertsPanel";
 import AssignedLabelsList from "@/components/AssignedLabelsList";
@@ -9,15 +12,16 @@ import ShipmentSummaryCards from "@/components/ShipmentSummaryCards";
 import PageHeader from "@/components/ui/PageHeader";
 import StatusBadge from "@/components/ui/StatusBadge";
 import EmptyState from "@/components/ui/EmptyState";
-import { getAlertsByShipmentId, getAssetById, getEventsByShipmentId, getLabelsByShipmentId, getShipmentById } from "@/data";
+import { useDemoState } from "@/context/DemoStateContext";
+import { mockData } from "@/data";
+import { getSeverityFromThresholds } from "@/data/thresholdRules";
 
-type ShipmentDetailPageProps = {
-  params: Promise<{ shipmentId: string }>;
-};
+export default function ShipmentDetailPage() {
+  const params = useParams<{ shipmentId: string }>();
+  const shipmentId = params?.shipmentId;
+  const { state } = useDemoState();
 
-export default async function ShipmentDetailPage({ params }: ShipmentDetailPageProps) {
-  const { shipmentId } = await params;
-  const shipment = getShipmentById(shipmentId);
+  const shipment = useMemo(() => mockData.shipments.find((entry) => entry.id === shipmentId), [shipmentId]);
 
   if (!shipment) {
     return (
@@ -30,10 +34,22 @@ export default async function ShipmentDetailPage({ params }: ShipmentDetailPageP
     );
   }
 
-  const labels = getLabelsByShipmentId(shipment.id);
-  const asset = getAssetById(shipment.assignedAsset);
-  const alerts = getAlertsByShipmentId(shipment.id);
-  const events = getEventsByShipmentId(shipment.id);
+  const labels = mockData.smartLabels.filter((label) => label.assignedShipmentId === shipment.id);
+  const asset = state.assets.find((entry) => entry.id === shipment.assignedAsset) ?? mockData.logisticsAssets.find((entry) => entry.id === shipment.assignedAsset);
+  const alerts = state.alerts
+    .filter((alert) => alert.shipmentId === shipment.id)
+    .map((alert) => ({
+      ...alert,
+      severity: getSeverityFromThresholds(alert.eventType, state.sensorThresholds),
+    }));
+  const events = [
+    ...state.alerts
+      .filter((alert) => alert.shipmentId === shipment.id)
+      .map((alert) => ({ ...alert, severity: getSeverityFromThresholds(alert.eventType, state.sensorThresholds) })),
+    ...state.sensorEvents
+      .filter((event) => event.shipmentId === shipment.id)
+      .map((event) => ({ ...event, severity: getSeverityFromThresholds(event.eventType, state.sensorThresholds) })),
+  ].sort((a, b) => a.timestamp.localeCompare(b.timestamp));
   const progress = shipment.status === "On Time" ? 72 : shipment.status === "Delayed" ? 58 : 64;
 
   return (

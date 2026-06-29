@@ -1,4 +1,5 @@
 import { mockData } from "./mockData";
+import { DEFAULT_SENSOR_THRESHOLDS } from "./thresholdRules";
 import type { DemoPresetName, DemoState } from "./types";
 
 const createInitialDemoState = (): DemoState => ({
@@ -11,6 +12,7 @@ const createInitialDemoState = (): DemoState => ({
   assets: mockData.logisticsAssets.map((asset) => ({ ...asset })),
   alerts: mockData.alerts.map((alert) => ({ ...alert })),
   sensorEvents: mockData.sensorEvents.map((event) => ({ ...event })),
+  sensorThresholds: { ...DEFAULT_SENSOR_THRESHOLDS },
   activityLog: [
     { id: "act-1", title: "Demo initialized", detail: "Enterprise network state loaded", timestamp: "just now" },
   ],

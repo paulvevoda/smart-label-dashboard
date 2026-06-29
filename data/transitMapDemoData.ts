@@ -1,6 +1,8 @@
 export type AssetType = "Distribution Center" | "Trailer" | "Truck" | "Container" | "Rail Car";
 export type RiskStatus = "Normal" | "Warning" | "Critical";
 
+import { DEFAULT_SENSOR_THRESHOLDS, getRiskStatusFromRate } from "@/data/thresholdRules";
+
 export type TransitAsset = {
   id: string;
   assetType: AssetType;
@@ -31,11 +33,7 @@ export type TransitAsset = {
 
 const getRiskStatus = (negativeAlerts: number, labelsPresent: number): RiskStatus => {
   if (labelsPresent === 0) return "Normal";
-  const rate = negativeAlerts / labelsPresent;
-
-  if (rate > 0.08) return "Critical";
-  if (rate > 0.02) return "Warning";
-  return "Normal";
+  return getRiskStatusFromRate(negativeAlerts / labelsPresent, DEFAULT_SENSOR_THRESHOLDS);
 };
 
 const baseAssets = [

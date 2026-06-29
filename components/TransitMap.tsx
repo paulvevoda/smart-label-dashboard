@@ -11,8 +11,9 @@ import MapRiskLegend from "@/components/MapRiskLegend";
 import TransitMapControls from "@/components/TransitMapControls";
 import Card from "@/components/ui/Card";
 import { useDemoState } from "@/context/DemoStateContext";
+import { getRiskStatusFromRate } from "@/data/thresholdRules";
 import { SENSOR_TRIP_META, resolveSensorTripKindFromEvents } from "@/data/sensorTripMeta";
-import type { LogisticsAsset, LogisticsNode, TransitShipmentStatus } from "@/data/types";
+import type { LogisticsAsset, LogisticsNode, SensorThresholds, TransitShipmentStatus } from "@/data/types";
 
 const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false });
@@ -697,6 +698,10 @@ const getLaneStyle = (riskStatus: LogisticsAsset["riskStatus"]) => {
   return { color: "#94a3b8", weight: 1.8, opacity: 0.3, dashArray: "6 8" };
 };
 
+const getAssetRiskStatus = (asset: LogisticsAsset, thresholds: SensorThresholds) => {
+  return getRiskStatusFromRate(asset.negativeAlertRate, thresholds);
+};
+
 function MapBackgroundClickHandler({ onBackgroundClick }: { onBackgroundClick: () => void }) {
   useMapEvents({
     click: () => onBackgroundClick(),
@@ -727,10 +732,11 @@ const getRouteNodeIcon = (isSelectedShipmentNode: boolean) => {
   });
 };
 
-const getTruckStatus = (asset: LogisticsAsset) => {
+const getTruckStatus = (asset: LogisticsAsset, thresholds: SensorThresholds) => {
   if (asset.recentEvents.some((event) => event.toLowerCase().includes("delivered"))) return "Delivered";
-  if (asset.riskStatus === "Critical") return "Exception";
-  if (asset.riskStatus === "Warning") return "Warning";
+  const riskStatus = getAssetRiskStatus(asset, thresholds);
+  if (riskStatus === "Critical") return "Exception";
+  if (riskStatus === "Warning") return "Warning";
   return "On Track";
 };
 
@@ -752,6 +758,7 @@ const getVehicleIcon = (
   mode: VehicleMode,
   routeStatus: TransitShipmentStatus,
   isDimmed: boolean,
+  thresholds: SensorThresholds,
 ) => {
   const color = isDimmed
     ? "#475569"
@@ -770,6 +777,7 @@ const getVehicleIcon = (
   const hasExceptionBadge = !isDimmed && symbol !== "•";
   const badgeTextColor = sensorKind ? SENSOR_TRIP_META[sensorKind].textColor : "#cbd5e1";
   const badgeBorderColor = sensorKind ? SENSOR_TRIP_META[sensorKind].borderColor : "rgba(148,163,184,0.35)";
+  const riskStatus = getAssetRiskStatus(asset, thresholds);
 
   const glyph = mode === "rail"
     ? `<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false" style="display:block;fill:#020617;">
@@ -793,7 +801,7 @@ const getVehicleIcon = (
     html: `
       <div style="position:relative;display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:9999px;border:2px solid ${isDimmed ? "rgba(148,163,184,0.65)" : "rgba(255,255,255,0.95)"};background:${color};box-shadow:${isSelected ? "0 0 0 7px rgba(34,211,238,0.26)" : "0 0 0 4px rgba(2,6,23,0.42)"};opacity:${isDimmed ? 0.72 : 1};cursor:pointer;">
         ${glyph}
-        ${hasExceptionBadge ? `<span style="position:absolute;right:-7px;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:9999px;border:1px solid ${badgeBorderColor};background:#020617;color:${badgeTextColor};font-size:10px;font-weight:800;line-height:1;">${symbol}</span>` : ""}
+        ${hasExceptionBadge ? `<span title="${riskStatus}" style="position:absolute;right:-7px;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:9999px;border:1px solid ${badgeBorderColor};background:#020617;color:${badgeTextColor};font-size:10px;font-weight:800;line-height:1;">${symbol}</span>` : ""}
       </div>
     `,
     className: "border-0 bg-transparent",
@@ -1000,15 +1008,15 @@ const deriveStatusFromEtaVariance = (asset: LogisticsAsset): TransitShipmentStat
   return varianceMinutes < 0 ? "early" : "delayed";
 };
 
-const getSelectedShipmentStatus = (asset: LogisticsAsset): TransitShipmentStatus => {
+const getSelectedShipmentStatus = (asset: LogisticsAsset, thresholds: SensorThresholds): TransitShipmentStatus => {
   if (asset.routeProgress?.status) return asset.routeProgress.status;
 
   const etaStatus = deriveStatusFromEtaVariance(asset);
   if (etaStatus) return etaStatus;
 
-  if (getTruckStatus(asset) === "Delivered") return "completed";
+  if (getTruckStatus(asset, thresholds) === "Delivered") return "completed";
   if (/delay|hold/i.test(asset.recentEvents.join(" "))) return "delayed";
-  if (asset.riskStatus === "Critical") return "delayed";
+  if (getAssetRiskStatus(asset, thresholds) === "Critical") return "delayed";
   return "on-track";
 };
 
@@ -1019,7 +1027,7 @@ const getStatusLabel = (status: TransitShipmentStatus) => {
   return "Completed";
 };
 
-const computeProgress = (asset: LogisticsAsset, tick: number, routeWaypoints: RouteWaypoint[]) => {
+const computeProgress = (asset: LogisticsAsset, tick: number, routeWaypoints: RouteWaypoint[], thresholds: SensorThresholds) => {
   const totalSegments = Math.max(1, routeWaypoints.length - 1);
 
   if (asset.routeProgress?.status === "completed") return 1;
@@ -1042,8 +1050,8 @@ const computeProgress = (asset: LogisticsAsset, tick: number, routeWaypoints: Ro
   const speed = Math.max(0.0035, Math.min(0.014, 0.018 / etaHours));
   const advanced = (baseProgress + (tick * speed)) % 1;
 
-  if (getTruckStatus(asset) === "Delivered") return 1;
-  if (getTruckStatus(asset) === "Exception") return Math.min(0.92, advanced);
+  if (getTruckStatus(asset, thresholds) === "Delivered") return 1;
+  if (getTruckStatus(asset, thresholds) === "Exception") return Math.min(0.92, advanced);
   return Math.min(0.98, Math.max(0.05, advanced));
 };
 
@@ -1138,11 +1146,11 @@ export default function TransitMap({ initialSelectedAssetId }: TransitMapProps) 
         (filter === "Containers" && asset.assetType === "Container") ||
         (filter === "Rail Cars" && asset.assetType === "Rail Car");
 
-      const matchesCritical = !criticalOnly || asset.riskStatus === "Critical";
+      const matchesCritical = !criticalOnly || getAssetRiskStatus(asset, state.sensorThresholds) === "Critical";
 
       return matchesSearch && matchesType && matchesCritical;
     });
-  }, [criticalOnly, filter, mapAssets, search]);
+  }, [criticalOnly, filter, mapAssets, search, state.sensorThresholds]);
 
   const selectedAsset = filteredAssets.find((asset) => asset.id === selectedAssetId) ?? null;
 
@@ -1160,10 +1168,10 @@ export default function TransitMap({ initialSelectedAssetId }: TransitMapProps) 
   const routeSnapshots = useMemo(() => filteredAssets.map((asset) => {
     const routeProfile = getRouteProfileForAsset(asset, state.nodes);
     const waypoints = routeProfile.waypoints.map((waypoint) => waypoint.coordinate);
-    const progress = computeProgress(asset, tick, routeProfile.waypoints);
+    const progress = computeProgress(asset, tick, routeProfile.waypoints, state.sensorThresholds);
     const point = interpolatePointAlongRoute(waypoints, progress);
     const destination = waypoints[waypoints.length - 1] ?? asset.location.coordinates;
-    const routeStatus = getSelectedShipmentStatus(asset);
+    const routeStatus = getSelectedShipmentStatus(asset, state.sensorThresholds);
 
     return {
       asset,
@@ -1183,8 +1191,9 @@ export default function TransitMap({ initialSelectedAssetId }: TransitMapProps) 
       truckCoordinate: point.coordinate,
       currentLeg: point.legLabel,
       destination,
+      riskStatus: getAssetRiskStatus(asset, state.sensorThresholds),
     };
-  }), [filteredAssets, state.nodes, tick]);
+  }), [filteredAssets, state.nodes, state.sensorThresholds, tick]);
 
   const selectedSnapshot = routeSnapshots.find((snapshot) => snapshot.asset.id === selectedAssetId) ?? null;
   const hasSelectedShipment = selectedSnapshot !== null;
@@ -1332,7 +1341,7 @@ export default function TransitMap({ initialSelectedAssetId }: TransitMapProps) 
                 <Marker
                   key={`truck-${asset.id}`}
                   position={truckCoordinate}
-                  icon={getVehicleIcon(asset, selectedAssetId === asset.id, mode, routeStatus, isDimmed)}
+                  icon={getVehicleIcon(asset, selectedAssetId === asset.id, mode, routeStatus, isDimmed, state.sensorThresholds)}
                   eventHandlers={{
                     click: (event) => {
                       event.originalEvent.stopPropagation();

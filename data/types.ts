@@ -280,6 +280,25 @@ export type SensorThresholdSetting = {
   value: string;
 };
 
+export type SensorThresholds = {
+  temperatureWarningC: number;
+  temperatureExceptionC: number;
+  humidityWarningPct: number;
+  humidityExceptionPct: number;
+  shockWarningG: number;
+  shockExceptionG: number;
+  packageRemovedWarningHours: number;
+  packageRemovedExceptionHours: number;
+  routeDeviationWarningMiles: number;
+  routeDeviationExceptionMiles: number;
+  arrivalVarianceWarningMinutes: number;
+  arrivalVarianceExceptionMinutes: number;
+  batteryWarningPct: number;
+  batteryExceptionPct: number;
+  warningRatePct: number;
+  exceptionRatePct: number;
+};
+
 export type UserAccount = {
   name: string;
   role: string;
@@ -337,5 +356,6 @@ export type DemoState = {
   assets: LogisticsAsset[];
   alerts: Alert[];
   sensorEvents: SensorEvent[];
+  sensorThresholds: SensorThresholds;
   activityLog: DemoActionLog[];
 };
