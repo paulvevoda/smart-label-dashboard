@@ -60,7 +60,7 @@ export default function Home() {
         ))}
       </section>
 
-      <section className="mt-6 grid gap-6 xl:grid-cols-3">
+      <section className="mt-6 grid auto-rows-fr gap-6 xl:grid-cols-3">
         <DonutPlaceholder
           title="Shipment Status"
           unitLabel="shipment"
