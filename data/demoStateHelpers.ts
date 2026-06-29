@@ -2,6 +2,192 @@ import { demoNodeCatalog, demoPresets } from "./demoState";
 import { getRiskStatus } from "./mockDataHelpers";
 import type { Alert, AlertSeverity, DemoActionLog, DemoPresetName, DemoState, LogisticsAsset, LogisticsNode, TransitLane } from "./types";
 
+export type BreakdownItem = {
+  label: string;
+  value: number;
+  percentage: number;
+};
+
+const clampToNonNegativeInt = (value: number) => {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.round(value));
+};
+
+export const calculatePercent = (count: number, total: number) => {
+  if (total <= 0) return 0;
+  return Math.round((count / total) * 100);
+};
+
+const parseEtaHours = (eta: string) => {
+  const hoursMatch = eta.match(/(\d+)\s*h/i);
+  const minutesMatch = eta.match(/(\d+)\s*m/i);
+  const hours = hoursMatch ? Number(hoursMatch[1]) : 0;
+  const minutes = minutesMatch ? Number(minutesMatch[1]) : 0;
+
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+  return hours + (minutes / 60);
+};
+
+const hasActiveAlertForAsset = (state: DemoState, assetId: string) => (
+  state.alerts.some((alert) => alert.assetId === assetId && alert.status === "Active")
+);
+
+const hasActiveCriticalAlertForAsset = (state: DemoState, assetId: string) => (
+  state.alerts.some((alert) => (
+    alert.assetId === assetId
+    && alert.status === "Active"
+    && (alert.severity === "Critical" || alert.eventType === "Label Offline")
+  ))
+);
+
+const hasWarningSignalForAsset = (state: DemoState, assetId: string) => (
+  state.alerts.some((alert) => (
+    alert.assetId === assetId
+    && alert.status === "Active"
+    && (alert.severity === "Warning" || alert.eventType === "Battery Warning")
+  ))
+);
+
+const isAssetOnDelayedLane = (state: DemoState, asset: DemoState["assets"][number]) => {
+  const destinationText = asset.destination.toLowerCase();
+  const locationText = asset.location.city.toLowerCase();
+
+  return state.lanes.some((lane) => {
+    if (lane.riskStatus === "Normal") return false;
+
+    const destinationNode = state.nodes.find((node) => node.id === lane.destinationNode);
+    const originNode = state.nodes.find((node) => node.id === lane.originNode);
+    const destinationMatches = destinationNode ? destinationText.includes(destinationNode.city.toLowerCase()) : false;
+    const originMatches = originNode ? locationText.includes(originNode.city.toLowerCase()) : false;
+
+    return destinationMatches || originMatches;
+  });
+};
+
+const toBreakdown = (items: Array<{ label: string; value: number }>): BreakdownItem[] => {
+  const total = items.reduce((sum, item) => sum + item.value, 0);
+  return items.map((item) => ({
+    ...item,
+    percentage: calculatePercent(item.value, total),
+  }));
+};
+
+export const getShipmentStatusBreakdown = (state: DemoState): BreakdownItem[] => {
+  let onTime = 0;
+  let delayed = 0;
+  let atRisk = 0;
+
+  state.assets.forEach((asset) => {
+    const isAtRisk = asset.riskStatus === "Critical"
+      || hasActiveCriticalAlertForAsset(state, asset.id)
+      || asset.labelsOffline > 0;
+
+    const isDelayed = !isAtRisk && (
+      asset.riskStatus === "Warning"
+      || hasWarningSignalForAsset(state, asset.id)
+      || isAssetOnDelayedLane(state, asset)
+    );
+
+    if (isAtRisk) {
+      atRisk += 1;
+    } else if (isDelayed) {
+      delayed += 1;
+    } else {
+      onTime += 1;
+    }
+  });
+
+  return toBreakdown([
+    { label: "On Time", value: onTime },
+    { label: "Delayed", value: delayed },
+    { label: "At Risk", value: atRisk },
+  ]);
+};
+
+export const getBatteryHealthBreakdown = (state: DemoState): BreakdownItem[] => {
+  const sampleCounts = state.assets.reduce((acc, asset) => {
+    acc.healthy += clampToNonNegativeInt(asset.battery.healthy);
+    acc.warning += clampToNonNegativeInt(asset.battery.warning);
+    acc.critical += clampToNonNegativeInt(asset.battery.critical);
+    return acc;
+  }, { healthy: 0, warning: 0, critical: 0 });
+
+  const sampleTotal = sampleCounts.healthy + sampleCounts.warning + sampleCounts.critical;
+  const reportingLabels = clampToNonNegativeInt(state.labelsReporting);
+  const offlineLabels = clampToNonNegativeInt(state.offlineLabels);
+
+  let healthyCount = 0;
+  let warningCount = 0;
+  let criticalCount = 0;
+
+  if (sampleTotal > 0 && reportingLabels > 0) {
+    healthyCount = Math.round((sampleCounts.healthy / sampleTotal) * reportingLabels);
+    warningCount = Math.round((sampleCounts.warning / sampleTotal) * reportingLabels);
+    criticalCount = Math.max(0, reportingLabels - healthyCount - warningCount);
+  }
+
+  return toBreakdown([
+    { label: "Healthy", value: healthyCount },
+    { label: "Warning", value: warningCount },
+    { label: "Critical", value: criticalCount },
+    { label: "Offline", value: offlineLabels },
+  ]);
+};
+
+export const getShipmentActivityBreakdown = (state: DemoState): BreakdownItem[] => {
+  let active = 0;
+  let idle = 0;
+  let expectedDelivery = 0;
+
+  state.assets.forEach((asset) => {
+    const etaHours = parseEtaHours(asset.eta);
+    const hasDeliveredEvent = state.sensorEvents.some((event) => (
+      event.assetId === asset.id && event.eventType === "Shipment Delivered"
+    )) || asset.recentEvents.some((event) => event === "Shipment Delivered");
+    const isIdle = hasDeliveredEvent
+      || asset.recentEvents.some((event) => event === "Shipment Arrived")
+      || asset.labelsIdle > Math.max(2, Math.floor(asset.labelsPresent * 0.2));
+    const expectedSoon = !isIdle
+      && etaHours !== null
+      && etaHours <= 24
+      && asset.riskStatus === "Normal"
+      && !hasActiveAlertForAsset(state, asset.id);
+
+    if (isIdle) {
+      idle += 1;
+    } else if (expectedSoon) {
+      expectedDelivery += 1;
+    } else {
+      active += 1;
+    }
+  });
+
+  return toBreakdown([
+    { label: "Active", value: active },
+    { label: "Idle", value: idle },
+    { label: "Expected Delivery Next 24 Hours", value: expectedDelivery },
+  ]);
+};
+
+export const getCommandCenterSummary = (state: DemoState) => {
+  const shipmentStatus = getShipmentStatusBreakdown(state);
+  const batteryHealth = getBatteryHealthBreakdown(state);
+  const shipmentActivity = getShipmentActivityBreakdown(state);
+
+  return {
+    activeSmartLabels: state.activeSmartLabels,
+    labelsReporting: state.labelsReporting,
+    offlineLabels: state.offlineLabels,
+    totalShipments: state.assets.length,
+    inTransit: shipmentActivity.find((item) => item.label === "Active")?.value ?? 0,
+    activeAlerts: state.alerts.filter((alert) => alert.status === "Active").length,
+    criticalAlerts: state.alerts.filter((alert) => alert.status === "Active" && alert.severity === "Critical").length,
+    shipmentStatus,
+    batteryHealth,
+    shipmentActivity,
+  };
+};
+
 export const applyDemoPreset = (state: DemoState, preset: DemoPresetName): DemoState => ({
   ...state,
   preset,
@@ -19,6 +205,7 @@ export const calculateDemoRisk = (negativeAlerts: number, labelsPresent: number)
 export const simulateAlert = (state: DemoState, assetId: string, eventType: Alert["eventType"], severity: AlertSeverity): DemoState => {
   const asset = state.assets.find((entry) => entry.id === assetId);
   const labelId = asset?.labelId ?? "LBL-0000";
+  const offlineDelta = eventType === "Label Offline" ? 1 : 0;
   const alert: Alert = {
     id: `AL-${state.alerts.length + 1}`,
     timestamp: "now",
@@ -35,6 +222,17 @@ export const simulateAlert = (state: DemoState, assetId: string, eventType: Aler
 
   return {
     ...state,
+    labelsReporting: Math.max(0, state.labelsReporting - offlineDelta),
+    offlineLabels: state.offlineLabels + offlineDelta,
+    assets: state.assets.map((entry) => (
+      entry.id === assetId
+        ? {
+          ...entry,
+          labelsOffline: entry.labelsOffline + offlineDelta,
+          riskStatus: severity === "Critical" ? "Critical" : entry.riskStatus,
+        }
+        : entry
+    )),
     alerts: [alert, ...state.alerts].slice(0, 12),
     sensorEvents: [
       {

@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import AppShell from "@/components/AppShell";
 import DonutPlaceholder from "@/components/DonutPlaceholder";
 import RecentActivityFeed from "@/components/RecentActivityFeed";
@@ -7,35 +8,13 @@ import Card from "@/components/ui/Card";
 import KpiCard from "@/components/ui/KpiCard";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { useDemoState } from "@/context/DemoStateContext";
+import { getCommandCenterSummary } from "@/data/demoStateHelpers";
 
 export default function Home() {
   const { state } = useDemoState();
-  const summary = {
-    activeSmartLabels: state.activeSmartLabels,
-    labelsReporting: state.labelsReporting,
-    offlineLabels: state.offlineLabels,
-    totalShipments: state.assets.length,
-    inTransit: state.assets.length,
-    activeAlerts: state.alerts.filter((alert) => alert.status === "Active").length,
-    criticalAlerts: state.alerts.filter((alert) => alert.severity === "Critical").length,
-    shipmentStatus: [
-      { label: "On Time", value: Math.max(1, state.assets.length - 2) },
-      { label: "Delayed", value: 1 },
-      { label: "At Risk", value: Math.max(0, state.alerts.filter((alert) => alert.severity === "Critical").length) },
-    ],
-    batteryHealth: [
-      { label: "Healthy", value: state.assets.filter((asset) => asset.riskStatus === "Normal").length },
-      { label: "Warning", value: state.assets.filter((asset) => asset.riskStatus === "Warning").length },
-      { label: "Critical", value: state.assets.filter((asset) => asset.riskStatus === "Critical").length },
-    ],
-    shipmentActivity: [
-      { label: "Active", value: state.assets.length },
-      { label: "Idle", value: 0 },
-      { label: "Expected Delivery Next 24 Hours", value: Math.max(0, state.lanes.length - 2) },
-    ],
-  };
+  const summary = useMemo(() => getCommandCenterSummary(state), [state]);
   const kpiValues = [
-    { label: "Labels Reporting", value: `${((summary.labelsReporting / summary.activeSmartLabels) * 100).toFixed(1)}%`, detail: "Across all monitored lanes", tone: "cyan" as const },
+    { label: "Labels Reporting", value: `${summary.activeSmartLabels > 0 ? ((summary.labelsReporting / summary.activeSmartLabels) * 100).toFixed(1) : "0.0"}%`, detail: "Across all monitored lanes", tone: "cyan" as const },
     { label: "Offline Labels", value: `${summary.offlineLabels}`, detail: "Requires field intervention", tone: "amber" as const },
     { label: "Total Shipments", value: `${summary.totalShipments}`, detail: "Tracked in the network", tone: "emerald" as const },
     { label: "In Transit", value: `${summary.inTransit}`, detail: "Moving through active corridors", tone: "cyan" as const },
@@ -82,9 +61,36 @@ export default function Home() {
       </section>
 
       <section className="mt-6 grid gap-6 xl:grid-cols-3">
-        <DonutPlaceholder title="Shipment Status" items={summary.shipmentStatus.map((entry) => ({ label: entry.label, value: entry.value, color: entry.label === "On Time" ? "#22d3ee" : entry.label === "Delayed" ? "#f59e0b" : "#fb7185" }))} />
-        <DonutPlaceholder title="Battery Health" items={summary.batteryHealth.map((entry) => ({ label: entry.label, value: entry.value, color: entry.label === "Healthy" ? "#34d399" : entry.label === "Warning" ? "#f59e0b" : "#fb7185" }))} />
-        <DonutPlaceholder title="Shipment Activity" items={summary.shipmentActivity.map((entry) => ({ label: entry.label, value: entry.value, color: entry.label === "Active" ? "#22d3ee" : entry.label === "Idle" ? "#64748b" : "#a78bfa" }))} />
+        <DonutPlaceholder
+          title="Shipment Status"
+          unitLabel="shipment"
+          items={summary.shipmentStatus.map((entry) => ({
+            label: entry.label,
+            value: entry.value,
+            percentage: entry.percentage,
+            color: entry.label === "On Time" ? "#22d3ee" : entry.label === "Delayed" ? "#f59e0b" : "#fb7185",
+          }))}
+        />
+        <DonutPlaceholder
+          title="Battery Health"
+          unitLabel="label"
+          items={summary.batteryHealth.map((entry) => ({
+            label: entry.label,
+            value: entry.value,
+            percentage: entry.percentage,
+            color: entry.label === "Healthy" ? "#34d399" : entry.label === "Warning" ? "#f59e0b" : entry.label === "Critical" ? "#fb7185" : "#64748b",
+          }))}
+        />
+        <DonutPlaceholder
+          title="Shipment Activity"
+          unitLabel="shipment"
+          items={summary.shipmentActivity.map((entry) => ({
+            label: entry.label,
+            value: entry.value,
+            percentage: entry.percentage,
+            color: entry.label === "Active" ? "#22d3ee" : entry.label === "Idle" ? "#64748b" : "#a78bfa",
+          }))}
+        />
       </section>
 
       <section className="mt-6">
