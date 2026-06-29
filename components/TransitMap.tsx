@@ -401,11 +401,11 @@ const losAngelesToShanghaiOceanRoute: RouteWaypoint[] = [
   { name: "Eastern North Pacific", coordinate: [34.5, -135] },
   { name: "Central North Pacific", coordinate: [37, -155] },
   { name: "Mid-Pacific Shipping Lane", coordinate: [38.5, -175], nodeType: "Hub" },
-  { name: "Western North Pacific", coordinate: [38, 165] },
-  { name: "Japan Offshore Approach", coordinate: [35.5, 145] },
-  { name: "East China Sea Approach", coordinate: [31.5, 128] },
-  { name: "Yangshan Port, China", coordinate: [30.6267, 122.0667] },
-  { name: "Shanghai, China", coordinate: [31.2304, 121.4737], nodeType: "Destination" },
+  { name: "Western North Pacific", coordinate: [38, -195] },
+  { name: "Japan Offshore Approach", coordinate: [35.5, -215] },
+  { name: "East China Sea Approach", coordinate: [31.5, -232] },
+  { name: "Yangshan Port, China", coordinate: [30.6267, -237.9333] },
+  { name: "Shanghai, China", coordinate: [31.2304, -238.5263], nodeType: "Destination" },
 ];
 
 const controlledRoutesByLaneId: Record<string, RouteWaypoint[]> = {
