@@ -631,7 +631,7 @@ const getVehicleIcon = (asset: LogisticsAsset, isSelected: boolean, mode: Vehicl
       </svg>`
       : mode === "air"
         ? `<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false" style="display:block;fill:#020617;">
-        <path d="M21 11.5l-8.4-2.9L9.3 3.2a1 1 0 0 0-1.8.2v4.5L3.8 6.7a1 1 0 0 0-1.3.8v1.1a1 1 0 0 0 .6.9l4.4 2.1v3l-2.1 1.2a1 1 0 0 0-.5.9v.6c0 .7.7 1.2 1.3.9l3.2-1.4 2.2 3.2c.3.4.9.5 1.4.3l.7-.4a1 1 0 0 0 .4-1.3L13 15.2l8-1.9a1 1 0 0 0 .8-1v-.8a1 1 0 0 0-.8-1z"/>
+        <path d="M12 2.8c.9 0 1.7.7 1.8 1.6l.6 4.6 5.8 2.3c.8.3 1.3 1 1.3 1.8v1c0 .9-.6 1.6-1.5 1.9l-5.3 1.6-.7 3.8c-.2 1-.9 1.6-2 1.6h-.1c-1 0-1.8-.7-2-1.6l-.7-3.8-5.3-1.6c-.8-.3-1.4-1-1.4-1.9v-1c0-.8.5-1.5 1.3-1.8L9.6 9l.6-4.6c.1-.9.9-1.6 1.8-1.6zm0 2.1l-.5 4.2h1L12 4.9zm-1 6.2h2l4.4 1.7H13v2.1h-2v-2.1H6.6l4.4-1.7zm1 5.8-.4 2.4h.8l-.4-2.4z"/>
       </svg>`
       : `<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false" style="display:block;fill:#020617;">
         <path d="M3 7h11v7h1.6c.7 0 1.3.3 1.7.8l2.7 3.2V21h-1.8a2.7 2.7 0 0 1-5.4 0H9.2a2.7 2.7 0 0 1-5.4 0H2v-3h1V7zm12 2v5h4.2l-2-2.4c-.2-.4-.6-.6-1-.6H15zM6.5 20a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4zm9 0a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4z"/>
