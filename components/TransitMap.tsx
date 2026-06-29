@@ -38,10 +38,12 @@ type RouteProfile = {
 };
 
 const SEATTLE_CHICAGO_ASSET_ID = "TR-SEA-CHI-90";
+const CHICAGO_ATLANTA_ASSET_ID = "TR-CHI-ATL-65";
 
 const controlledRouteIdByAssetId: Record<string, string> = {
   "TR-SEA-12": "seattle-boise",
   [SEATTLE_CHICAGO_ASSET_ID]: "seattle-chicago",
+  [CHICAGO_ATLANTA_ASSET_ID]: "chicago-atlanta",
 };
 
 const isDisabledLocalLaneAsset = (asset: LogisticsAsset) => {
@@ -70,6 +72,26 @@ const seattleToChicagoDemoAsset: LogisticsAsset = {
   battery: { healthy: 72, warning: 18, critical: 10 },
   recentEvents: ["Battery Warning", "Shipment Departed"],
   labelId: "LBL-9090",
+};
+
+const chicagoToAtlantaDemoAsset: LogisticsAsset = {
+  id: CHICAGO_ATLANTA_ASSET_ID,
+  assetType: "Truck",
+  carrier: "HarborLine Freight",
+  customer: "BluePeak Foods",
+  location: { city: "Chicago", state: "IL", coordinates: [41.8781, -87.6298] },
+  destination: "Atlanta, GA",
+  eta: "12h 20m",
+  labelsPresent: 64,
+  labelsActive: 57,
+  labelsIdle: 4,
+  labelsOffline: 3,
+  negativeAlerts24h: 3,
+  negativeAlertRate: 0.0469,
+  riskStatus: "Warning",
+  battery: { healthy: 69, warning: 22, critical: 9 },
+  recentEvents: ["Delay Hold", "Shipment Departed"],
+  labelId: "LBL-9165",
 };
 
 const seattleToBoiseRoute: RouteWaypoint[] = [
@@ -106,9 +128,26 @@ const seattleToChicagoRoute: RouteWaypoint[] = [
   { name: "Chicago, IL", coordinate: [41.8781, -87.6298], nodeType: "Destination" },
 ];
 
+const chicagoToAtlantaRoute: RouteWaypoint[] = [
+  { name: "Chicago, IL", coordinate: [41.8781, -87.6298], nodeType: "Origin" },
+  { name: "Merrillville, IN", coordinate: [41.4828, -87.3328] },
+  { name: "Lafayette, IN", coordinate: [40.4167, -86.8753] },
+  { name: "Indianapolis, IN", coordinate: [39.7684, -86.1581] },
+  { name: "Columbus, IN", coordinate: [39.2014, -85.9214] },
+  { name: "Louisville, KY", coordinate: [38.2527, -85.7585] },
+  { name: "Bowling Green, KY", coordinate: [36.9685, -86.4808] },
+  { name: "Nashville, TN", coordinate: [36.1627, -86.7816], nodeType: "Hub" },
+  { name: "Murfreesboro, TN", coordinate: [35.8456, -86.3903] },
+  { name: "Chattanooga, TN", coordinate: [35.0456, -85.3097], nodeType: "Hub" },
+  { name: "Dalton, GA", coordinate: [34.7698, -84.9702] },
+  { name: "Marietta, GA", coordinate: [33.9526, -84.5499] },
+  { name: "Atlanta, GA", coordinate: [33.749, -84.388], nodeType: "Destination" },
+];
+
 const truckRoutesByLaneId: Record<string, RouteWaypoint[]> = {
   "seattle-boise": seattleToBoiseRoute,
   "seattle-chicago": seattleToChicagoRoute,
+  "chicago-atlanta": chicagoToAtlantaRoute,
 };
 
 const DESTINATION_COORDINATES: Record<string, Coordinate> = {
@@ -123,6 +162,7 @@ const DESTINATION_COORDINATES: Record<string, Coordinate> = {
   "Miami Port": [25.7781, -80.1794],
   "Boston Market": [42.3601, -71.0589],
   "Chicago, IL": [41.8781, -87.6298],
+  "Atlanta, GA": [33.749, -84.388],
   "Orlando Fulfillment": [28.5383, -81.3792],
 };
 
@@ -360,11 +400,13 @@ export default function TransitMap() {
   const mapAssets = useMemo(() => {
     const baseAssets = state.assets.filter((asset) => !isDisabledLocalLaneAsset(asset));
 
-    if (baseAssets.some((asset) => asset.id === SEATTLE_CHICAGO_ASSET_ID)) {
-      return baseAssets;
-    }
+    const withSeattleChicago = baseAssets.some((asset) => asset.id === SEATTLE_CHICAGO_ASSET_ID)
+      ? baseAssets
+      : [...baseAssets, seattleToChicagoDemoAsset];
 
-    return [...baseAssets, seattleToChicagoDemoAsset];
+    return withSeattleChicago.some((asset) => asset.id === CHICAGO_ATLANTA_ASSET_ID)
+      ? withSeattleChicago
+      : [...withSeattleChicago, chicagoToAtlantaDemoAsset];
   }, [state.assets]);
 
   const filteredAssets = useMemo(() => {
