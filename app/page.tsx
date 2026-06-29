@@ -63,6 +63,7 @@ export default function Home() {
       <section className="mt-6 grid auto-rows-fr gap-6 xl:grid-cols-3">
         <DonutPlaceholder
           title="Shipment Status"
+          subtitle="(per shipment)"
           items={summary.shipmentStatus.map((entry) => ({
             label: entry.label,
             value: entry.value,
@@ -72,6 +73,7 @@ export default function Home() {
         />
         <DonutPlaceholder
           title="Battery Health"
+          subtitle="(per label)"
           items={summary.batteryHealth.map((entry) => ({
             label: entry.label,
             value: entry.value,
@@ -81,6 +83,7 @@ export default function Home() {
         />
         <DonutPlaceholder
           title="Shipment Activity"
+          subtitle="(per shipment)"
           items={summary.shipmentActivity.map((entry) => ({
             label: entry.label,
             value: entry.value,

@@ -7,10 +7,11 @@ type DonutItem = {
 
 type DonutPlaceholderProps = {
   title: string;
+  subtitle: string;
   items: DonutItem[];
 };
 
-export default function DonutPlaceholder({ title, items }: DonutPlaceholderProps) {
+export default function DonutPlaceholder({ title, subtitle, items }: DonutPlaceholderProps) {
   const total = items.reduce((sum, item) => sum + item.value, 0);
   const radius = 44;
   const circumference = 2 * Math.PI * radius;
@@ -33,15 +34,18 @@ export default function DonutPlaceholder({ title, items }: DonutPlaceholderProps
 
   return (
     <div className="flex h-full flex-col rounded-3xl border border-white/10 bg-slate-900/70 p-6 shadow-2xl shadow-black/20 transition-colors hover:border-cyan-400/20">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-white">{title}</h3>
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h3 className="truncate text-lg font-semibold text-white">{title}</h3>
+          <p className="mt-1 text-sm text-slate-400">{subtitle}</p>
+        </div>
         <span className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.16em] text-cyan-200">
           <span className="h-2 w-2 rounded-full bg-cyan-300" aria-hidden />
           Live snapshot
         </span>
       </div>
 
-      <div className="mt-6 grid flex-1 grid-cols-1 gap-6 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-center lg:gap-8">
+      <div className="mt-6 grid flex-1 grid-cols-1 gap-6 lg:grid-cols-[9.25rem_minmax(0,1fr)] lg:items-center lg:gap-6">
         <div className="mx-auto lg:mx-0">
           <div className="relative h-[8.75rem] w-[8.75rem] sm:h-[9.25rem] sm:w-[9.25rem]">
             <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90" role="img" aria-label={`${title} distribution`}>
@@ -82,7 +86,7 @@ export default function DonutPlaceholder({ title, items }: DonutPlaceholderProps
                   <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
                   <span className="truncate text-sm font-medium text-slate-200">{item.label}</span>
                 </div>
-                <span className="whitespace-nowrap text-sm font-medium text-white tabular-nums">
+                <span className="shrink-0 whitespace-nowrap text-sm font-medium text-white tabular-nums">
                   {item.value.toLocaleString()} · {percentage}%
                 </span>
               </div>
