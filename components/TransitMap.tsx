@@ -95,6 +95,18 @@ const isDuplicateChicagoNewarkAsset = (asset: LogisticsAsset) => {
   return originText.includes("chicago") && destinationText.includes("newark");
 };
 
+const isDuplicateNycBostonAsset = (asset: LogisticsAsset) => {
+  if (asset.id === NYC_BOSTON_ASSET_ID) return false;
+
+  const originText = `${asset.location.city}, ${asset.location.state}`.toLowerCase();
+  const destinationText = asset.destination.toLowerCase();
+
+  const isNycOrigin = originText.includes("new york") || originText.includes("nyc");
+  const isBostonDestination = destinationText.includes("boston");
+
+  return isNycOrigin && isBostonDestination;
+};
+
 const seattleToChicagoDemoAsset: LogisticsAsset = {
   id: SEATTLE_CHICAGO_ASSET_ID,
   assetType: "Truck",
@@ -679,6 +691,7 @@ export default function TransitMap() {
       && !isMiamiConnectedAsset(asset)
       && !isDisabledCityConnectedAsset(asset)
       && !isDuplicateChicagoNewarkAsset(asset)
+      && !isDuplicateNycBostonAsset(asset)
     ));
 
     const withSeattleChicago = baseAssets.some((asset) => asset.id === SEATTLE_CHICAGO_ASSET_ID)
