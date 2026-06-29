@@ -442,18 +442,25 @@ const getRouteStyle = (riskStatus: LogisticsAsset["riskStatus"], hasIssue: boole
   const modeDash = mode === "rail"
     ? "11 6"
     : mode === "ocean"
-      ? "14 8"
+      ? "1 8 12 8"
       : "";
+  const modeLineCap: "round" | "butt" = mode === "ocean" ? "round" : "butt";
 
   if (riskStatus === "Critical" || hasIssue) {
-    return { color: "#fb7185", weight: 4, opacity: 0.95, dashArray: modeDash };
+    return { color: "#fb7185", weight: 4, opacity: 0.95, dashArray: modeDash, lineCap: modeLineCap };
   }
 
   if (riskStatus === "Warning") {
-    return { color: "#f59e0b", weight: 3.2, opacity: 0.8, dashArray: mode === "truck" ? "8 6" : modeDash };
+    return {
+      color: "#f59e0b",
+      weight: 3.2,
+      opacity: 0.8,
+      dashArray: mode === "truck" ? "8 6" : modeDash,
+      lineCap: mode === "truck" ? "butt" : modeLineCap,
+    };
   }
 
-  return { color: "#38bdf8", weight: 3, opacity: 0.75, dashArray: modeDash };
+  return { color: "#38bdf8", weight: 3, opacity: 0.75, dashArray: modeDash, lineCap: modeLineCap };
 };
 
 const getLaneStyle = (riskStatus: LogisticsAsset["riskStatus"]) => {
