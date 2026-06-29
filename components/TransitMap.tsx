@@ -40,12 +40,16 @@ type RouteProfile = {
 const SEATTLE_CHICAGO_ASSET_ID = "TR-SEA-CHI-90";
 const CHICAGO_ATLANTA_ASSET_ID = "TR-CHI-ATL-65";
 const SEATTLE_RENO_ASSET_ID = "TR-SEA-RNO-395";
+const CHICAGO_NEWARK_ASSET_ID = "TR-CHI-EWR-80";
+const NYC_NEWARK_ASSET_ID = "TR-NYC-EWR-95";
 
 const controlledRouteIdByAssetId: Record<string, string> = {
   "TR-SEA-12": "seattle-boise",
   [SEATTLE_CHICAGO_ASSET_ID]: "seattle-chicago",
   [CHICAGO_ATLANTA_ASSET_ID]: "chicago-atlanta",
   [SEATTLE_RENO_ASSET_ID]: "seattle-reno",
+  [CHICAGO_NEWARK_ASSET_ID]: "chicago-newark",
+  [NYC_NEWARK_ASSET_ID]: "nyc-newark",
 };
 
 const isDisabledLocalLaneAsset = (asset: LogisticsAsset) => {
@@ -132,6 +136,46 @@ const seattleToRenoDemoAsset: LogisticsAsset = {
   labelId: "LBL-9395",
 };
 
+const chicagoToNewarkDemoAsset: LogisticsAsset = {
+  id: CHICAGO_NEWARK_ASSET_ID,
+  assetType: "Truck",
+  carrier: "Midwest Rail Freight",
+  customer: "Cedar Supply",
+  location: { city: "Chicago", state: "IL", coordinates: [41.8781, -87.6298] },
+  destination: "Newark, NJ",
+  eta: "15h 10m",
+  labelsPresent: 71,
+  labelsActive: 61,
+  labelsIdle: 6,
+  labelsOffline: 4,
+  negativeAlerts24h: 2,
+  negativeAlertRate: 0.0282,
+  riskStatus: "Warning",
+  battery: { healthy: 74, warning: 18, critical: 8 },
+  recentEvents: ["Battery Warning", "Shipment Departed"],
+  labelId: "LBL-8080",
+};
+
+const nycToNewarkDemoAsset: LogisticsAsset = {
+  id: NYC_NEWARK_ASSET_ID,
+  assetType: "Truck",
+  carrier: "Portside Global",
+  customer: "Northwind Pharma",
+  location: { city: "New York", state: "NY", coordinates: [40.7128, -74.006] },
+  destination: "Newark, NJ",
+  eta: "1h 35m",
+  labelsPresent: 39,
+  labelsActive: 34,
+  labelsIdle: 3,
+  labelsOffline: 2,
+  negativeAlerts24h: 1,
+  negativeAlertRate: 0.0256,
+  riskStatus: "Warning",
+  battery: { healthy: 68, warning: 24, critical: 8 },
+  recentEvents: ["Route Deviation", "Shipment Departed"],
+  labelId: "LBL-9595",
+};
+
 const seattleToBoiseRoute: RouteWaypoint[] = [
   { name: "Seattle, WA", coordinate: [47.6062, -122.3321], nodeType: "Origin" },
   { name: "Snoqualmie Pass, WA", coordinate: [47.3923, -121.4001] },
@@ -199,11 +243,37 @@ const seattleToRenoRoute: RouteWaypoint[] = [
   { name: "Reno, NV", coordinate: [39.5296, -119.8138], nodeType: "Destination" },
 ];
 
+const chicagoToNewarkRoute: RouteWaypoint[] = [
+  { name: "Chicago, IL", coordinate: [41.8781, -87.6298], nodeType: "Origin" },
+  { name: "Gary, IN", coordinate: [41.5934, -87.3464] },
+  { name: "South Bend, IN", coordinate: [41.6764, -86.252] },
+  { name: "Toledo, OH", coordinate: [41.6528, -83.5379] },
+  { name: "Cleveland, OH", coordinate: [41.4993, -81.6944], nodeType: "Hub" },
+  { name: "Youngstown, OH", coordinate: [41.0998, -80.6495] },
+  { name: "Clarion, PA", coordinate: [41.2148, -79.3853] },
+  { name: "Bloomsburg, PA", coordinate: [41.0037, -76.4549] },
+  { name: "Stroudsburg, PA", coordinate: [40.9868, -75.1946] },
+  { name: "Parsippany, NJ", coordinate: [40.8579, -74.425], nodeType: "Hub" },
+  { name: "Newark, NJ", coordinate: [40.7357, -74.1724], nodeType: "Destination" },
+];
+
+const nycToNewarkRoute: RouteWaypoint[] = [
+  { name: "New York City, NY", coordinate: [40.7128, -74.006], nodeType: "Origin" },
+  { name: "Upper Manhattan, NY", coordinate: [40.8501, -73.9354] },
+  { name: "George Washington Bridge, NY/NJ", coordinate: [40.8517, -73.9527], nodeType: "Hub" },
+  { name: "Fort Lee, NJ", coordinate: [40.8509, -73.9701] },
+  { name: "Secaucus, NJ", coordinate: [40.7895, -74.0565], nodeType: "Hub" },
+  { name: "Kearny, NJ", coordinate: [40.7684, -74.1454] },
+  { name: "Newark, NJ", coordinate: [40.7357, -74.1724], nodeType: "Destination" },
+];
+
 const truckRoutesByLaneId: Record<string, RouteWaypoint[]> = {
   "seattle-boise": seattleToBoiseRoute,
   "seattle-chicago": seattleToChicagoRoute,
   "chicago-atlanta": chicagoToAtlantaRoute,
   "seattle-reno": seattleToRenoRoute,
+  "chicago-newark": chicagoToNewarkRoute,
+  "nyc-newark": nycToNewarkRoute,
 };
 
 const DESTINATION_COORDINATES: Record<string, Coordinate> = {
@@ -211,8 +281,10 @@ const DESTINATION_COORDINATES: Record<string, Coordinate> = {
   "Boise Distribution Hub": [43.615, -116.2023],
   "Atlanta Hub": [33.749, -84.388],
   "New York / New Jersey": [40.7357, -74.1724],
+  "Newark, NJ": [40.7357, -74.1724],
   "Newark": [40.7357, -74.1724],
   "Newark Yard": [40.7357, -74.1724],
+  "New York City, NY": [40.7128, -74.006],
   "Boston Market": [42.3601, -71.0589],
   "Chicago, IL": [41.8781, -87.6298],
   "Atlanta, GA": [33.749, -84.388],
@@ -470,7 +542,15 @@ export default function TransitMap() {
       ? withChicagoAtlanta
       : [...withChicagoAtlanta, seattleToRenoDemoAsset];
 
-    return withSeattleReno;
+    const withChicagoNewark = withSeattleReno.some((asset) => asset.id === CHICAGO_NEWARK_ASSET_ID)
+      ? withSeattleReno
+      : [...withSeattleReno, chicagoToNewarkDemoAsset];
+
+    const withNycNewark = withChicagoNewark.some((asset) => asset.id === NYC_NEWARK_ASSET_ID)
+      ? withChicagoNewark
+      : [...withChicagoNewark, nycToNewarkDemoAsset];
+
+    return withNycNewark;
   }, [state.assets]);
 
   const filteredAssets = useMemo(() => {
