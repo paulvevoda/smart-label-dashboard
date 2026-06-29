@@ -7,6 +7,10 @@ export default function MapRiskLegend() {
           <span className="flex h-5 w-5 items-center justify-center rounded-full border border-white/80 bg-cyan-400 text-[10px] font-semibold text-slate-950">T</span>
           Moving truck + issue badge
         </div>
+        <div className="flex items-center gap-2 rounded-full border border-slate-400/20 bg-slate-500/10 px-3 py-2 text-sm text-slate-200">
+          <span className="h-3 w-3 rounded-full border-2 border-slate-400/30 bg-slate-300" />
+          Route node milestone
+        </div>
         <div className="flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-2 text-sm text-cyan-200">
           <span className="h-2.5 w-2.5 rounded-full bg-cyan-400" />
           On track

@@ -19,6 +19,14 @@ const Polyline = dynamic(() => import("react-leaflet").then((mod) => mod.Polylin
 const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), { ssr: false });
 
 type Coordinate = [number, number];
+type RouteNodeType = "Origin" | "Destination" | "Hub" | "Checkpoint";
+type RouteMilestone = {
+  key: string;
+  coordinate: Coordinate;
+  label: string;
+  type: RouteNodeType;
+  shipments: string[];
+};
 
 const DESTINATION_COORDINATES: Record<string, Coordinate> = {
   "Ontario Crossdock": [34.0633, -117.6509],
@@ -50,6 +58,24 @@ const getLaneStyle = (riskStatus: LogisticsAsset["riskStatus"]) => {
   if (riskStatus === "Critical") return { color: "#fb7185", weight: 2.2, opacity: 0.35, dashArray: "7 7" };
   if (riskStatus === "Warning") return { color: "#f59e0b", weight: 2, opacity: 0.32, dashArray: "7 7" };
   return { color: "#94a3b8", weight: 1.8, opacity: 0.3, dashArray: "6 8" };
+};
+
+const getRouteNodeIcon = (type: RouteNodeType) => {
+  const styleByType: Record<RouteNodeType, { bg: string; border: string }> = {
+    Origin: { bg: "#22d3ee", border: "rgba(34,211,238,0.35)" },
+    Destination: { bg: "#34d399", border: "rgba(52,211,153,0.35)" },
+    Hub: { bg: "#a78bfa", border: "rgba(167,139,250,0.35)" },
+    Checkpoint: { bg: "#94a3b8", border: "rgba(148,163,184,0.28)" },
+  };
+  const style = styleByType[type];
+
+  return divIcon({
+    html: `<div style="display:flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:9999px;border:2px solid ${style.border};background:${style.bg};box-shadow:0 0 0 3px rgba(2,6,23,0.55);"></div>`,
+    className: "border-0 bg-transparent",
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
+    popupAnchor: [0, -8],
+  });
 };
 
 const getMarkerSymbol = (asset: LogisticsAsset) => {
@@ -188,6 +214,24 @@ const distanceBetween = (a: Coordinate, b: Coordinate) => {
   return Math.sqrt((dx * dx) + (dy * dy));
 };
 
+const findNearestNode = (coordinate: Coordinate, nodes: LogisticsNode[]): { node: LogisticsNode | null; distance: number } => {
+  let nearest: LogisticsNode | null = null;
+  let minDistance = Number.POSITIVE_INFINITY;
+
+  nodes.forEach((node) => {
+    const distance = distanceBetween(coordinate, node.coordinates);
+    if (distance < minDistance) {
+      minDistance = distance;
+      nearest = node;
+    }
+  });
+
+  return {
+    node: nearest,
+    distance: minDistance,
+  };
+};
+
 const interpolatePointAlongRoute = (points: Coordinate[], progress: number): { coordinate: Coordinate; legLabel: string } => {
   if (points.length <= 1) return { coordinate: points[0] ?? [39.5, -98.35], legLabel: "Route unavailable" };
 
@@ -300,6 +344,52 @@ export default function TransitMap() {
     };
   }), [filteredAssets, state.nodes, tick]);
 
+  const routeMilestones = useMemo(() => {
+    const milestoneMap = new Map<string, RouteMilestone>();
+
+    routeSnapshots.forEach(({ asset, waypoints }) => {
+      waypoints.forEach((coordinate, index) => {
+        const roundedKey = `${coordinate[0].toFixed(2)}:${coordinate[1].toFixed(2)}`;
+        const nearest = findNearestNode(coordinate, state.nodes);
+        const nearestNodeName = nearest.node ? nearest.node.name : null;
+        const isOrigin = index === 0;
+        const isDestination = index === waypoints.length - 1;
+        const isHub = !isOrigin && !isDestination && nearest.node !== null && nearest.distance <= 1.25;
+        const type: RouteNodeType = isOrigin
+          ? "Origin"
+          : isDestination
+            ? "Destination"
+            : isHub
+              ? "Hub"
+              : "Checkpoint";
+        const label = isOrigin
+          ? `${asset.location.city}, ${asset.location.state}`
+          : isDestination
+            ? asset.destination
+            : nearestNodeName ?? `Checkpoint ${index}`;
+
+        const key = `${roundedKey}:${type}`;
+        if (milestoneMap.has(key)) {
+          const existing = milestoneMap.get(key);
+          if (existing && !existing.shipments.includes(asset.id)) {
+            existing.shipments.push(asset.id);
+          }
+          return;
+        }
+
+        milestoneMap.set(key, {
+          key,
+          coordinate,
+          label,
+          type,
+          shipments: [asset.id],
+        });
+      });
+    });
+
+    return Array.from(milestoneMap.values());
+  }, [routeSnapshots, state.nodes]);
+
   return (
     <div className="space-y-6">
       <TransitMapControls
@@ -348,13 +438,30 @@ export default function TransitMap() {
                 />
               ))}
 
+              {routeMilestones.map((milestone) => (
+                <Marker
+                  key={`node-${milestone.key}`}
+                  position={milestone.coordinate}
+                  icon={getRouteNodeIcon(milestone.type)}
+                  zIndexOffset={350}
+                >
+                  <Popup>
+                    <div className="min-w-[210px] text-sm text-slate-700">
+                      <p className="font-semibold text-slate-900">{milestone.label}</p>
+                      <p className="mt-1 text-slate-600">{milestone.type} milestone</p>
+                      <p className="mt-2 text-slate-600">Shipment links: {milestone.shipments.join(", ")}</p>
+                    </div>
+                  </Popup>
+                </Marker>
+              ))}
+
               {routeSnapshots.map(({ asset, destination, progress, currentLeg, truckCoordinate }) => (
                 <Marker
                   key={`truck-${asset.id}`}
                   position={truckCoordinate}
                   icon={getTruckIcon(asset, selectedAssetId === asset.id)}
                   eventHandlers={{ click: () => setSelectedAssetId(asset.id) }}
-                  zIndexOffset={selectedAssetId === asset.id ? 1000 : 0}
+                  zIndexOffset={selectedAssetId === asset.id ? 1000 : 700}
                 >
                   <Popup>
                     <div className="min-w-[240px] text-sm text-slate-700">
