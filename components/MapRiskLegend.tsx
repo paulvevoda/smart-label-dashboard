@@ -43,15 +43,19 @@ export default function MapRiskLegend() {
         </div>
         <div className="flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-2 text-sm text-cyan-200">
           <span className="h-2.5 w-2.5 rounded-full bg-cyan-400" />
-          On track (selected)
+          On track
         </div>
         <div className="flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
           <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-          Delayed (selected)
+          Delayed
         </div>
         <div className="flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
           <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-          Early (selected)
+          Early
+        </div>
+        <div className="flex items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-500/5 px-3 py-2 text-sm text-emerald-100">
+          <span className="h-2.5 w-2.5 rounded-full bg-emerald-300" />
+          Completed
         </div>
         <div className="flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
           <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
@@ -121,7 +125,7 @@ export default function MapRiskLegend() {
 
       <div className="mt-3 rounded-2xl border border-white/10 bg-slate-950/70 p-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-cyan-200">Shipment status key</p>
-        <p className="mt-1 text-[11px] text-slate-400">Applies when a shipment is selected</p>
+        <p className="mt-1 text-[11px] text-slate-400">Line color/emphasis = shipment status in overview and detail</p>
         <div className="mt-2 grid gap-2">
           <div className="flex items-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-500/10 px-2.5 py-1.5 text-xs text-cyan-200">
             <span className="h-2.5 w-2.5 rounded-full bg-cyan-400" />
@@ -138,6 +142,9 @@ export default function MapRiskLegend() {
           <div className="flex items-center gap-2 rounded-xl border border-emerald-300/20 bg-emerald-500/5 px-2.5 py-1.5 text-xs text-emerald-100">
             <span className="h-2.5 w-2.5 rounded-full bg-emerald-300" />
             Completed segment from origin
+          </div>
+          <div className="rounded-xl border border-white/10 bg-slate-900/40 px-2.5 py-1.5 text-xs text-slate-300">
+            Detailed hubs and transfer points appear for the selected shipment only.
           </div>
         </div>
       </div>

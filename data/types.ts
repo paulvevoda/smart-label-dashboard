@@ -103,6 +103,9 @@ export type Shipment = {
   routeType?: ShipmentRouteType;
   status: ShipmentStatus;
   transitStatus?: ShipmentTransitStatus;
+  routeSegments?: string[];
+  completedRouteSegments?: number;
+  hubs?: string[];
   activity: ShipmentActivity;
   assignedLabels: number;
   assignedAsset: string;

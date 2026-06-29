@@ -646,17 +646,17 @@ const getModeLineCap = (mode: VehicleMode): "round" | "butt" => {
   return (mode === "ocean" || mode === "air") ? "round" : "butt";
 };
 
-const getOverviewRouteStyle = (mode: VehicleMode) => {
-  return {
-    color: "#64748b",
-    weight: 2.2,
-    opacity: 0.38,
-    dashArray: getModeDashPattern(mode),
-    lineCap: getModeLineCap(mode),
-  };
-};
+const getShipmentRouteStyle = (status: TransitShipmentStatus, mode: VehicleMode, isDimmed: boolean) => {
+  if (isDimmed) {
+    return {
+      color: "#64748b",
+      weight: 2.3,
+      opacity: 0.33,
+      dashArray: getModeDashPattern(mode),
+      lineCap: getModeLineCap(mode),
+    };
+  }
 
-const getSelectedRouteStyle = (status: TransitShipmentStatus, mode: VehicleMode) => {
   const color = status === "delayed"
     ? "#f59e0b"
     : status === "early"
@@ -742,20 +742,23 @@ const getVehicleIcon = (
   asset: LogisticsAsset,
   isSelected: boolean,
   mode: VehicleMode,
-  selectedRouteStatus: TransitShipmentStatus | null,
+  routeStatus: TransitShipmentStatus,
+  isDimmed: boolean,
 ) => {
-  const color = selectedRouteStatus === "delayed"
+  const color = isDimmed
+    ? "#475569"
+    : routeStatus === "delayed"
     ? "#f59e0b"
-    : selectedRouteStatus === "early"
+    : routeStatus === "early"
       ? "#34d399"
-      : selectedRouteStatus === "completed"
+      : routeStatus === "completed"
         ? "#10b981"
-        : selectedRouteStatus === "on-track"
+        : routeStatus === "on-track"
           ? "#22d3ee"
           : "#64748b";
 
   const symbol = getMarkerSymbol(asset);
-  const hasExceptionBadge = selectedRouteStatus !== null && symbol !== "•";
+  const hasExceptionBadge = !isDimmed && symbol !== "•";
   const badgeColor = asset.riskStatus === "Critical"
     ? "#fb7185"
     : asset.riskStatus === "Warning"
@@ -782,7 +785,7 @@ const getVehicleIcon = (
 
   return divIcon({
     html: `
-      <div style="position:relative;display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:9999px;border:2px solid rgba(255,255,255,0.95);background:${color};box-shadow:${isSelected ? "0 0 0 7px rgba(34,211,238,0.26)" : "0 0 0 4px rgba(2,6,23,0.42)"};">
+      <div style="position:relative;display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:9999px;border:2px solid ${isDimmed ? "rgba(148,163,184,0.65)" : "rgba(255,255,255,0.95)"};background:${color};box-shadow:${isSelected ? "0 0 0 7px rgba(34,211,238,0.26)" : "0 0 0 4px rgba(2,6,23,0.42)"};opacity:${isDimmed ? 0.72 : 1};">
         ${glyph}
         ${hasExceptionBadge ? `<span style="position:absolute;right:-7px;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:9999px;border:2px solid rgba(255,255,255,0.95);background:${badgeColor};color:#020617;font-size:10px;font-weight:800;line-height:1;">${symbol}</span>` : ""}
       </div>
@@ -1181,13 +1184,14 @@ export default function TransitMap({ initialSelectedAssetId }: TransitMapProps) 
   const hasSelectedShipment = selectedSnapshot !== null;
 
   const routeMilestones = useMemo(() => {
+    if (!selectedSnapshot) return [];
+
     const milestoneMap = new Map<string, RouteMilestone>();
-    const routeScope = selectedSnapshot ? [selectedSnapshot] : routeSnapshots;
+    const routeScope = [selectedSnapshot];
 
     routeScope.forEach(({ asset, laneId, routeWaypoints }) => {
       routeWaypoints.forEach((waypoint, index) => {
-        if (!waypoint.nodeType || waypoint.nodeType === "Hub") return;
-        if (!selectedSnapshot && waypoint.nodeType !== "Origin") return;
+        if (!waypoint.nodeType) return;
         const coordinate = waypoint.coordinate;
         const roundedKey = `${coordinate[0].toFixed(2)}:${coordinate[1].toFixed(2)}`;
         const key = `${laneId}:${roundedKey}:${waypoint.nodeType}:${index}`;
@@ -1234,9 +1238,8 @@ export default function TransitMap({ initialSelectedAssetId }: TransitMapProps) 
 
               {routeSnapshots.map(({ asset, waypoints, laneId, mode, routeStatus }) => {
                 const isSelectedRoute = hasSelectedShipment && selectedSnapshot?.asset.id === asset.id;
-                const routeStyle = isSelectedRoute
-                  ? getSelectedRouteStyle(routeStatus, mode)
-                  : getOverviewRouteStyle(mode);
+                const isDimmed = hasSelectedShipment && !isSelectedRoute;
+                const routeStyle = getShipmentRouteStyle(routeStatus, mode, isDimmed);
 
                 return (
                 <Polyline
@@ -1250,7 +1253,7 @@ export default function TransitMap({ initialSelectedAssetId }: TransitMapProps) 
                       <p className="font-semibold text-slate-900">Lane {laneId}</p>
                       <p className="mt-1 text-slate-600">Shipment {asset.id}</p>
                       <p className="mt-2 text-slate-600">
-                        Route posture: {isSelectedRoute ? getStatusLabel(routeStatus) : "Overview (select shipment)"}
+                        Route posture: {getStatusLabel(routeStatus)}
                       </p>
                     </div>
                   </Popup>
@@ -1293,13 +1296,13 @@ export default function TransitMap({ initialSelectedAssetId }: TransitMapProps) 
 
               {routeSnapshots.map(({ asset, destination, progress, currentLeg, truckCoordinate, mode, routeStatus }) => {
                 const isSelectedRoute = hasSelectedShipment && selectedSnapshot?.asset.id === asset.id;
-                const iconStatus = isSelectedRoute ? routeStatus : null;
+                const isDimmed = hasSelectedShipment && !isSelectedRoute;
 
                 return (
                 <Marker
                   key={`truck-${asset.id}`}
                   position={truckCoordinate}
-                  icon={getVehicleIcon(asset, selectedAssetId === asset.id, mode, iconStatus)}
+                  icon={getVehicleIcon(asset, selectedAssetId === asset.id, mode, routeStatus, isDimmed)}
                   eventHandlers={{ click: () => setSelectedAssetId(asset.id) }}
                   zIndexOffset={selectedAssetId === asset.id ? 1000 : 700}
                 >
@@ -1309,7 +1312,7 @@ export default function TransitMap({ initialSelectedAssetId }: TransitMapProps) 
                       <p className="mt-1 text-slate-600">{asset.assetType} · {asset.carrier}</p>
                       <p className="mt-2 text-slate-600">{asset.location.city}, {asset.location.state} → {asset.destination}</p>
                       <div className="mt-3 space-y-1 text-slate-600">
-                        <p>Status: <span className="font-medium text-slate-900">{isSelectedRoute ? getStatusLabel(routeStatus) : "Overview"}</span></p>
+                        <p>Status: <span className="font-medium text-slate-900">{getStatusLabel(routeStatus)}</span></p>
                         <p>{currentLeg} · {Math.round(progress * 100)}% complete</p>
                         <p>ETA: {asset.eta}</p>
                         <p>Active signal: {getActiveAlertSummary(asset)}</p>
