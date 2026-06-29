@@ -63,7 +63,6 @@ export default function Home() {
       <section className="mt-6 grid auto-rows-fr gap-6 xl:grid-cols-3">
         <DonutPlaceholder
           title="Shipment Status"
-          unitLabel="shipment"
           items={summary.shipmentStatus.map((entry) => ({
             label: entry.label,
             value: entry.value,
@@ -73,7 +72,6 @@ export default function Home() {
         />
         <DonutPlaceholder
           title="Battery Health"
-          unitLabel="label"
           items={summary.batteryHealth.map((entry) => ({
             label: entry.label,
             value: entry.value,
@@ -83,12 +81,11 @@ export default function Home() {
         />
         <DonutPlaceholder
           title="Shipment Activity"
-          unitLabel="shipment"
           items={summary.shipmentActivity.map((entry) => ({
             label: entry.label,
             value: entry.value,
             percentage: entry.percentage,
-            color: entry.label === "Active" ? "#22d3ee" : entry.label === "Idle" ? "#64748b" : "#a78bfa",
+            color: entry.label === "Active" ? "#22d3ee" : entry.label === "Idle" ? "#64748b" : entry.label === "ETA <24h" ? "#a78bfa" : "#a78bfa",
           }))}
         />
       </section>

@@ -8,15 +8,9 @@ type DonutItem = {
 type DonutPlaceholderProps = {
   title: string;
   items: DonutItem[];
-  unitLabel: string;
 };
 
-const singularize = (unitLabel: string, value: number) => {
-  if (value === 1) return unitLabel;
-  return `${unitLabel}s`;
-};
-
-export default function DonutPlaceholder({ title, items, unitLabel }: DonutPlaceholderProps) {
+export default function DonutPlaceholder({ title, items }: DonutPlaceholderProps) {
   const total = items.reduce((sum, item) => sum + item.value, 0);
   const radius = 44;
   const circumference = 2 * Math.PI * radius;
@@ -83,11 +77,13 @@ export default function DonutPlaceholder({ title, items, unitLabel }: DonutPlace
           {items.map((item) => {
             const percentage = item.percentage ?? (total > 0 ? Math.round((item.value / total) * 100) : 0);
             return (
-              <div key={item.label} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-white/10 bg-slate-950/70 px-4 py-3 transition-colors hover:border-white/20">
-                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                <span className="truncate text-sm font-medium text-slate-200">{item.label}</span>
+              <div key={item.label} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-white/10 bg-slate-950/70 px-4 py-3 transition-colors hover:border-white/20">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
+                  <span className="truncate text-sm font-medium text-slate-200">{item.label}</span>
+                </div>
                 <span className="whitespace-nowrap text-sm font-medium text-white tabular-nums">
-                  {item.value.toLocaleString()} {singularize(unitLabel, item.value)} · {percentage}%
+                  {item.value.toLocaleString()} · {percentage}%
                 </span>
               </div>
             );

@@ -165,7 +165,7 @@ export const getShipmentActivityBreakdown = (state: DemoState): BreakdownItem[] 
   return toBreakdown([
     { label: "Active", value: active },
     { label: "Idle", value: idle },
-    { label: "Expected Delivery Next 24 Hours", value: expectedDelivery },
+    { label: "ETA <24h", value: expectedDelivery },
   ]);
 };
 
