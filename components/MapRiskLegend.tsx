@@ -51,11 +51,11 @@ export default function MapRiskLegend() {
         </div>
         <div className="flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
           <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-          Warning 3.2%
+          Warning &lt;5%
         </div>
         <div className="flex items-center gap-2 rounded-full border border-rose-400/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
           <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
-          Exception 0.8%
+          Exception ≥5%
         </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
