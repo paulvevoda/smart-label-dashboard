@@ -1,3 +1,5 @@
+import { SENSOR_TRIP_META, SENSOR_TRIP_ORDER } from "@/data/sensorTripMeta";
+
 export default function MapRiskLegend() {
   return (
     <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-4 shadow-2xl shadow-black/20">
@@ -71,30 +73,24 @@ export default function MapRiskLegend() {
         </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
-        <div className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-slate-300">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full border border-cyan-400/30 bg-cyan-500/15 text-[10px] font-semibold text-cyan-200">T</span>
-          Temperature
-        </div>
-        <div className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-slate-300">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full border border-amber-400/30 bg-amber-500/15 text-[10px] font-semibold text-amber-200">S</span>
-          Shock / tamper
-        </div>
-        <div className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-slate-300">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full border border-rose-400/30 bg-rose-500/15 text-[10px] font-semibold text-rose-200">P</span>
-          Package removed
-        </div>
-        <div className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-slate-300">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full border border-amber-400/30 bg-amber-500/15 text-[10px] font-semibold text-amber-200">B</span>
-          Battery
-        </div>
-        <div className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-slate-300">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full border border-violet-400/30 bg-violet-500/15 text-[10px] font-semibold text-violet-200">D</span>
-          Delay / hold
-        </div>
-        <div className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-slate-300">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full border border-cyan-400/30 bg-cyan-500/15 text-[10px] font-semibold text-cyan-200">R</span>
-          Route deviation
-        </div>
+        {SENSOR_TRIP_ORDER.map((sensorKind) => {
+          const sensorMeta = SENSOR_TRIP_META[sensorKind];
+          return (
+            <div key={sensorKind} className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-slate-300">
+              <span
+                className="flex h-5 w-5 items-center justify-center rounded-full border text-[10px] font-semibold"
+                style={{
+                  borderColor: sensorMeta.borderColor,
+                  background: "rgba(2, 6, 23, 0.92)",
+                  color: sensorMeta.textColor,
+                }}
+              >
+                {sensorMeta.symbol}
+              </span>
+              {sensorMeta.label}
+            </div>
+          );
+        })}
       </div>
 
       <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/70 p-3">

@@ -11,6 +11,7 @@ import MapRiskLegend from "@/components/MapRiskLegend";
 import TransitMapControls from "@/components/TransitMapControls";
 import Card from "@/components/ui/Card";
 import { useDemoState } from "@/context/DemoStateContext";
+import { SENSOR_TRIP_META, resolveSensorTripKindFromEvents } from "@/data/sensorTripMeta";
 import type { LogisticsAsset, LogisticsNode, TransitShipmentStatus } from "@/data/types";
 
 const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false });
@@ -723,18 +724,6 @@ const getRouteNodeIcon = (type: RouteNodeType, isSelectedShipmentNode: boolean) 
   });
 };
 
-const getMarkerSymbol = (asset: LogisticsAsset) => {
-  const recentEvents = asset.recentEvents.join(" ").toLowerCase();
-
-  if (recentEvents.includes("temperature") || recentEvents.includes("humidity")) return "T";
-  if (recentEvents.includes("shock") || recentEvents.includes("tamper")) return "S";
-  if (recentEvents.includes("package removed") || recentEvents.includes("light")) return "P";
-  if (recentEvents.includes("battery")) return "B";
-  if (recentEvents.includes("delay") || recentEvents.includes("hold")) return "D";
-  if (recentEvents.includes("deviat") || recentEvents.includes("route")) return "R";
-  return "•";
-};
-
 const getTruckStatus = (asset: LogisticsAsset) => {
   if (asset.recentEvents.some((event) => event.toLowerCase().includes("delivered"))) return "Delivered";
   if (asset.riskStatus === "Critical") return "Exception";
@@ -773,13 +762,11 @@ const getVehicleIcon = (
           ? "#22d3ee"
           : "#64748b";
 
-  const symbol = getMarkerSymbol(asset);
+  const sensorKind = resolveSensorTripKindFromEvents(asset.recentEvents);
+  const symbol = sensorKind ? SENSOR_TRIP_META[sensorKind].symbol : "•";
   const hasExceptionBadge = !isDimmed && symbol !== "•";
-  const badgeColor = asset.riskStatus === "Critical"
-    ? "#fb7185"
-    : asset.riskStatus === "Warning"
-      ? "#f59e0b"
-      : "#64748b";
+  const badgeTextColor = sensorKind ? SENSOR_TRIP_META[sensorKind].textColor : "#cbd5e1";
+  const badgeBorderColor = sensorKind ? SENSOR_TRIP_META[sensorKind].borderColor : "rgba(148,163,184,0.35)";
 
   const glyph = mode === "rail"
     ? `<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false" style="display:block;fill:#020617;">
@@ -803,7 +790,7 @@ const getVehicleIcon = (
     html: `
       <div style="position:relative;display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:9999px;border:2px solid ${isDimmed ? "rgba(148,163,184,0.65)" : "rgba(255,255,255,0.95)"};background:${color};box-shadow:${isSelected ? "0 0 0 7px rgba(34,211,238,0.26)" : "0 0 0 4px rgba(2,6,23,0.42)"};opacity:${isDimmed ? 0.72 : 1};cursor:pointer;">
         ${glyph}
-        ${hasExceptionBadge ? `<span style="position:absolute;right:-7px;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:9999px;border:2px solid rgba(255,255,255,0.95);background:${badgeColor};color:#020617;font-size:10px;font-weight:800;line-height:1;">${symbol}</span>` : ""}
+        ${hasExceptionBadge ? `<span style="position:absolute;right:-7px;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:9999px;border:1px solid ${badgeBorderColor};background:#020617;color:${badgeTextColor};font-size:10px;font-weight:800;line-height:1;">${symbol}</span>` : ""}
       </div>
     `,
     className: "border-0 bg-transparent",
