@@ -44,6 +44,14 @@ const controlledRouteIdByAssetId: Record<string, string> = {
   [SEATTLE_CHICAGO_ASSET_ID]: "seattle-chicago",
 };
 
+const isDisabledLocalLaneAsset = (asset: LogisticsAsset) => {
+  const originText = `${asset.location.city}, ${asset.location.state}`.toLowerCase();
+  const destinationText = asset.destination.toLowerCase();
+
+  return asset.id === "DC-LA-01"
+    || (originText.includes("los angeles") && destinationText.includes("ontario"));
+};
+
 const seattleToChicagoDemoAsset: LogisticsAsset = {
   id: SEATTLE_CHICAGO_ASSET_ID,
   assetType: "Truck",
@@ -350,11 +358,13 @@ export default function TransitMap() {
   }, []);
 
   const mapAssets = useMemo(() => {
-    if (state.assets.some((asset) => asset.id === SEATTLE_CHICAGO_ASSET_ID)) {
-      return state.assets;
+    const baseAssets = state.assets.filter((asset) => !isDisabledLocalLaneAsset(asset));
+
+    if (baseAssets.some((asset) => asset.id === SEATTLE_CHICAGO_ASSET_ID)) {
+      return baseAssets;
     }
 
-    return [...state.assets, seattleToChicagoDemoAsset];
+    return [...baseAssets, seattleToChicagoDemoAsset];
   }, [state.assets]);
 
   const filteredAssets = useMemo(() => {
