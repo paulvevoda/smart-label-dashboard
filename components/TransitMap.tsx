@@ -20,12 +20,38 @@ const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), { 
 
 type Coordinate = [number, number];
 type RouteNodeType = "Origin" | "Destination" | "Hub";
+type RouteWaypoint = {
+  name: string;
+  coordinate: Coordinate;
+  nodeType?: RouteNodeType;
+};
 type RouteMilestone = {
   key: string;
   coordinate: Coordinate;
   label: string;
   type: RouteNodeType;
   shipments: string[];
+};
+type RouteProfile = {
+  laneId: string;
+  waypoints: RouteWaypoint[];
+};
+
+const seattleToBoiseRoute: RouteWaypoint[] = [
+  { name: "Seattle, WA", coordinate: [47.6062, -122.3321], nodeType: "Origin" },
+  { name: "Snoqualmie Pass, WA", coordinate: [47.3923, -121.4001] },
+  { name: "Ellensburg, WA", coordinate: [46.9965, -120.5478] },
+  { name: "Yakima, WA", coordinate: [46.6021, -120.5059] },
+  { name: "Tri-Cities, WA", coordinate: [46.2112, -119.1372], nodeType: "Hub" },
+  { name: "Pendleton, OR", coordinate: [45.6721, -118.7886], nodeType: "Hub" },
+  { name: "La Grande, OR", coordinate: [45.3246, -118.0877] },
+  { name: "Baker City, OR", coordinate: [44.7749, -117.8344] },
+  { name: "Ontario, OR", coordinate: [44.0266, -116.9629] },
+  { name: "Boise, ID", coordinate: [43.615, -116.2023], nodeType: "Destination" },
+];
+
+const truckRoutesByLaneId: Record<string, RouteWaypoint[]> = {
+  "seattle-boise": seattleToBoiseRoute,
 };
 
 const DESTINATION_COORDINATES: Record<string, Coordinate> = {
@@ -158,11 +184,6 @@ const hashId = (input: string) => {
   return Math.abs(hash);
 };
 
-const midpoint = (first: Coordinate, second: Coordinate): Coordinate => [
-  Number(((first[0] + second[0]) / 2).toFixed(4)),
-  Number(((first[1] + second[1]) / 2).toFixed(4)),
-];
-
 const resolveDestinationCoordinate = (asset: LogisticsAsset, nodes: LogisticsNode[]): Coordinate => {
   const destinationText = asset.destination.toLowerCase();
   const matchedNode = nodes.find((node) => destinationText.includes(node.city.toLowerCase()));
@@ -170,65 +191,40 @@ const resolveDestinationCoordinate = (asset: LogisticsAsset, nodes: LogisticsNod
   return DESTINATION_COORDINATES[asset.destination] ?? asset.location.coordinates;
 };
 
-const buildRouteCorridor = (origin: Coordinate, destination: Coordinate): Coordinate[] => {
-  const [originLat, originLng] = origin;
-  const [destinationLat, destinationLng] = destination;
+const getRouteLaneIdForAsset = (asset: LogisticsAsset) => {
+  const originCity = asset.location.city.toLowerCase();
+  const destinationText = asset.destination.toLowerCase();
 
-  if (originLng < -115 && destinationLng > -112 && destinationLng < -104) {
-    const sacramento: Coordinate = [38.5816, -121.4944];
-    const reno: Coordinate = [39.5296, -119.8138];
-    const saltLake: Coordinate = [40.7608, -111.891];
-    return [origin, midpoint(origin, sacramento), sacramento, reno, midpoint(reno, saltLake), destination];
+  if (originCity.includes("seattle") && destinationText.includes("boise")) {
+    return "seattle-boise";
   }
 
-  if (originLng < -112 && destinationLng > -100 && destinationLng < -82) {
-    const phoenix: Coordinate = [33.4484, -112.074];
-    const elPaso: Coordinate = [31.7619, -106.485];
-    const dallas: Coordinate = [32.7767, -96.797];
-    const jackson: Coordinate = [32.2988, -90.1848];
-    return [origin, midpoint(origin, phoenix), phoenix, elPaso, dallas, jackson, destination];
+  return null;
+};
+
+const getRouteProfileForAsset = (asset: LogisticsAsset, nodes: LogisticsNode[]): RouteProfile => {
+  const routeLaneId = getRouteLaneIdForAsset(asset);
+  if (routeLaneId && truckRoutesByLaneId[routeLaneId]) {
+    return {
+      laneId: routeLaneId,
+      waypoints: truckRoutesByLaneId[routeLaneId],
+    };
   }
 
-  if (originLng > -104 && destinationLng > -90 && destinationLng < -74) {
-    const stLouis: Coordinate = [38.627, -90.1994];
-    const columbus: Coordinate = [39.9612, -82.9988];
-    const pittsburgh: Coordinate = [40.4406, -79.9959];
-    return [origin, midpoint(origin, stLouis), stLouis, columbus, pittsburgh, destination];
-  }
-
-  if (originLat < 36 && destinationLat < 36 && destinationLng > -96) {
-    const mobile: Coordinate = [30.6954, -88.0399];
-    const tallahassee: Coordinate = [30.4383, -84.2807];
-    return [origin, midpoint(origin, mobile), mobile, tallahassee, destination];
-  }
-
-  const denver: Coordinate = [39.7392, -104.9903];
-  const kansasCity: Coordinate = [39.0997, -94.5786];
-  return [origin, midpoint(origin, denver), denver, kansasCity, midpoint(kansasCity, destination), destination];
+  const destination = resolveDestinationCoordinate(asset, nodes);
+  return {
+    laneId: `direct-${asset.id}`,
+    waypoints: [
+      { name: `${asset.location.city}, ${asset.location.state}`, coordinate: asset.location.coordinates, nodeType: "Origin" },
+      { name: asset.destination, coordinate: destination, nodeType: "Destination" },
+    ],
+  };
 };
 
 const distanceBetween = (a: Coordinate, b: Coordinate) => {
   const dx = b[1] - a[1];
   const dy = b[0] - a[0];
   return Math.sqrt((dx * dx) + (dy * dy));
-};
-
-const findNearestNode = (coordinate: Coordinate, nodes: LogisticsNode[]): { node: LogisticsNode | null; distance: number } => {
-  let nearest: LogisticsNode | null = null;
-  let minDistance = Number.POSITIVE_INFINITY;
-
-  nodes.forEach((node) => {
-    const distance = distanceBetween(coordinate, node.coordinates);
-    if (distance < minDistance) {
-      minDistance = distance;
-      nearest = node;
-    }
-  });
-
-  return {
-    node: nearest,
-    distance: minDistance,
-  };
 };
 
 const interpolatePointAlongRoute = (points: Coordinate[], progress: number): { coordinate: Coordinate; legLabel: string } => {
@@ -318,23 +314,17 @@ export default function TransitMap() {
 
   const selectedAsset = filteredAssets.find((asset) => asset.id === selectedAssetId) ?? null;
 
-  const lanePositions = useMemo(() => state.lanes.map((lane) => {
-    const origin = state.nodes.find((node) => node.id === lane.originNode)?.coordinates;
-    const destination = state.nodes.find((node) => node.id === lane.destinationNode)?.coordinates;
-    return {
-      lane,
-      positions: origin && destination ? [origin, destination] : [],
-    };
-  }), [state.lanes, state.nodes]);
-
   const routeSnapshots = useMemo(() => filteredAssets.map((asset) => {
-    const destination = resolveDestinationCoordinate(asset, state.nodes);
-    const waypoints = buildRouteCorridor(asset.location.coordinates, destination);
+    const routeProfile = getRouteProfileForAsset(asset, state.nodes);
+    const waypoints = routeProfile.waypoints.map((waypoint) => waypoint.coordinate);
     const progress = computeProgress(asset, tick);
     const point = interpolatePointAlongRoute(waypoints, progress);
+    const destination = waypoints[waypoints.length - 1] ?? asset.location.coordinates;
 
     return {
       asset,
+      laneId: routeProfile.laneId,
+      routeWaypoints: routeProfile.waypoints,
       waypoints,
       progress,
       truckCoordinate: point.coordinate,
@@ -346,28 +336,12 @@ export default function TransitMap() {
   const routeMilestones = useMemo(() => {
     const milestoneMap = new Map<string, RouteMilestone>();
 
-    routeSnapshots.forEach(({ asset, waypoints }) => {
-      waypoints.forEach((coordinate, index) => {
+    routeSnapshots.forEach(({ asset, laneId, routeWaypoints }) => {
+      routeWaypoints.forEach((waypoint, index) => {
+        if (!waypoint.nodeType) return;
+        const coordinate = waypoint.coordinate;
         const roundedKey = `${coordinate[0].toFixed(2)}:${coordinate[1].toFixed(2)}`;
-        const nearest = findNearestNode(coordinate, state.nodes);
-        const nearestNodeName = nearest.node ? nearest.node.name : null;
-        const isOrigin = index === 0;
-        const isDestination = index === waypoints.length - 1;
-        const isHub = !isOrigin && !isDestination && nearest.node !== null && nearest.distance <= 1.25;
-        if (!isOrigin && !isDestination && !isHub) return;
-
-        const type: RouteNodeType = isOrigin
-          ? "Origin"
-          : isDestination
-            ? "Destination"
-            : "Hub";
-        const label = isOrigin
-          ? `${asset.location.city}, ${asset.location.state}`
-          : isDestination
-            ? asset.destination
-            : nearestNodeName ?? `Hub ${index}`;
-
-        const key = `${roundedKey}:${type}`;
+        const key = `${laneId}:${roundedKey}:${waypoint.nodeType}:${index}`;
         if (milestoneMap.has(key)) {
           const existing = milestoneMap.get(key);
           if (existing && !existing.shipments.includes(asset.id)) {
@@ -379,8 +353,8 @@ export default function TransitMap() {
         milestoneMap.set(key, {
           key,
           coordinate,
-          label,
-          type,
+          label: waypoint.name,
+          type: waypoint.nodeType,
           shipments: [asset.id],
         });
       });
@@ -409,32 +383,21 @@ export default function TransitMap() {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
 
-              {lanePositions.map(({ lane, positions }) => (
-                positions.length > 1 ? (
-                  <Polyline
-                    key={lane.id}
-                    positions={positions}
-                    pathOptions={getLaneStyle(lane.riskStatus)}
-                  >
-                    <Popup>
-                      <div className="min-w-[200px] text-sm text-slate-700">
-                        <p className="font-semibold text-slate-900">{lane.corridor}</p>
-                        <p className="mt-1 text-slate-600">Lane {lane.id}</p>
-                        <p className="mt-2 text-slate-600">Risk posture: {lane.riskStatus}</p>
-                        <p className="mt-1 text-slate-600">Assets in transit: {lane.assetsInTransit}</p>
-                      </div>
-                    </Popup>
-                  </Polyline>
-                ) : null
-              ))}
-
-              {routeSnapshots.map(({ asset, waypoints }) => (
+              {routeSnapshots.map(({ asset, waypoints, laneId }) => (
                 <Polyline
                   key={`route-${asset.id}`}
                   positions={waypoints}
                   pathOptions={getRouteStyle(asset.riskStatus, getMarkerSymbol(asset) !== "•")}
                   eventHandlers={{ click: () => setSelectedAssetId(asset.id) }}
-                />
+                >
+                  <Popup>
+                    <div className="min-w-[220px] text-sm text-slate-700">
+                      <p className="font-semibold text-slate-900">Lane {laneId}</p>
+                      <p className="mt-1 text-slate-600">Shipment {asset.id}</p>
+                      <p className="mt-2 text-slate-600">Route posture: {getTruckStatus(asset)}</p>
+                    </div>
+                  </Popup>
+                </Polyline>
               ))}
 
               {routeMilestones.map((milestone) => (
