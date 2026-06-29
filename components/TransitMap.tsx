@@ -47,6 +47,7 @@ const NYC_BOSTON_ASSET_ID = "TR-NYC-BOS-95";
 const LOS_ANGELES_ATLANTA_RAIL_ASSET_ID = "RC-LA-ATL-40";
 const LOS_ANGELES_SHANGHAI_OCEAN_ASSET_ID = "CT-LA-SHA-88";
 const ATLANTA_FRANKFURT_AIR_ASSET_ID = "CT-ATL-FRA-74";
+const LOS_ANGELES_LONG_BEACH_ASSET_ID = "TR-LA-LGB-710";
 
 const controlledRouteIdByAssetId: Record<string, string> = {
   "TR-SEA-12": "seattle-boise",
@@ -59,6 +60,7 @@ const controlledRouteIdByAssetId: Record<string, string> = {
   [LOS_ANGELES_ATLANTA_RAIL_ASSET_ID]: "los-angeles-atlanta-rail",
   [LOS_ANGELES_SHANGHAI_OCEAN_ASSET_ID]: "los-angeles-shanghai-ocean",
   [ATLANTA_FRANKFURT_AIR_ASSET_ID]: "atlanta-frankfurt-air",
+  [LOS_ANGELES_LONG_BEACH_ASSET_ID]: "los-angeles-long-beach",
 };
 
 const railLaneIds = new Set(["los-angeles-atlanta-rail"]);
@@ -290,6 +292,26 @@ const atlantaToFrankfurtAirDemoAsset: LogisticsAsset = {
   labelId: "LBL-7474",
 };
 
+const losAngelesToLongBeachDemoAsset: LogisticsAsset = {
+  id: LOS_ANGELES_LONG_BEACH_ASSET_ID,
+  assetType: "Truck",
+  carrier: "Pacific Drayage Co.",
+  customer: "Northwind Pharma",
+  location: { city: "Los Angeles", state: "CA", coordinates: [34.0522, -118.2437] },
+  destination: "Long Beach, CA",
+  eta: "1h 25m",
+  labelsPresent: 36,
+  labelsActive: 31,
+  labelsIdle: 3,
+  labelsOffline: 2,
+  negativeAlerts24h: 1,
+  negativeAlertRate: 0.0278,
+  riskStatus: "Warning",
+  battery: { healthy: 77, warning: 16, critical: 7 },
+  recentEvents: ["Route Deviation", "Shipment Departed"],
+  labelId: "LBL-1710",
+};
+
 const seattleToBoiseRoute: RouteWaypoint[] = [
   { name: "Seattle, WA", coordinate: [47.6062, -122.3321], nodeType: "Origin" },
   { name: "Snoqualmie Pass, WA", coordinate: [47.3923, -121.4001] },
@@ -455,6 +477,18 @@ const atlantaToFrankfurtAirRoute: RouteWaypoint[] = [
   { name: "Frankfurt Airport, Germany", coordinate: [50.0379, 8.5622], nodeType: "Destination" },
 ];
 
+const losAngelesToLongBeachRoute: RouteWaypoint[] = [
+  { name: "Los Angeles, CA", coordinate: [34.0522, -118.2437], nodeType: "Origin" },
+  { name: "Vernon, CA", coordinate: [34.0039, -118.2301] },
+  { name: "Commerce, CA", coordinate: [34.0006, -118.1598] },
+  { name: "Bell Gardens / I-710 Corridor, CA", coordinate: [33.9653, -118.1515] },
+  { name: "South Gate, CA", coordinate: [33.9547, -118.212] },
+  { name: "Compton, CA", coordinate: [33.8958, -118.2201] },
+  { name: "Carson, CA", coordinate: [33.8314, -118.282] },
+  { name: "Port of Long Beach, CA", coordinate: [33.7542, -118.2165] },
+  { name: "Long Beach, CA", coordinate: [33.7701, -118.1937], nodeType: "Destination" },
+];
+
 const controlledRoutesByLaneId: Record<string, RouteWaypoint[]> = {
   "seattle-boise": seattleToBoiseRoute,
   "seattle-chicago": seattleToChicagoRoute,
@@ -466,6 +500,7 @@ const controlledRoutesByLaneId: Record<string, RouteWaypoint[]> = {
   "los-angeles-atlanta-rail": losAngelesToAtlantaRailRoute,
   "los-angeles-shanghai-ocean": losAngelesToShanghaiOceanRoute,
   "atlanta-frankfurt-air": atlantaToFrankfurtAirRoute,
+  "los-angeles-long-beach": losAngelesToLongBeachRoute,
 };
 
 const DESTINATION_COORDINATES: Record<string, Coordinate> = {
@@ -485,6 +520,7 @@ const DESTINATION_COORDINATES: Record<string, Coordinate> = {
   "Orlando Fulfillment": [28.5383, -81.3792],
   "Shanghai, China": [31.2304, 121.4737],
   "Frankfurt, Germany": [50.1109, 8.6821],
+  "Long Beach, CA": [33.7701, -118.1937],
 };
 
 const getRouteStyle = (riskStatus: LogisticsAsset["riskStatus"], hasIssue: boolean, mode: VehicleMode) => {
@@ -792,7 +828,11 @@ export default function TransitMap() {
       ? withLosAngelesShanghaiOcean
       : [...withLosAngelesShanghaiOcean, atlantaToFrankfurtAirDemoAsset];
 
-    return withAtlantaFrankfurtAir;
+    const withLosAngelesLongBeach = withAtlantaFrankfurtAir.some((asset) => asset.id === LOS_ANGELES_LONG_BEACH_ASSET_ID)
+      ? withAtlantaFrankfurtAir
+      : [...withAtlantaFrankfurtAir, losAngelesToLongBeachDemoAsset];
+
+    return withLosAngelesLongBeach;
   }, [state.assets]);
 
   const filteredAssets = useMemo(() => {
