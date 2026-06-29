@@ -38,6 +38,8 @@ type RouteProfile = {
 };
 type VehicleMode = "truck" | "rail" | "ocean" | "air";
 
+const LOS_ANGELES_RAIL_YARD_COORDINATE: Coordinate = [34.0286, -118.227];
+
 const SEATTLE_CHICAGO_ASSET_ID = "TR-SEA-CHI-90";
 const CHICAGO_ATLANTA_ASSET_ID = "TR-CHI-ATL-65";
 const SEATTLE_RENO_ASSET_ID = "TR-SEA-RNO-395";
@@ -237,7 +239,7 @@ const losAngelesToAtlantaRailDemoAsset: LogisticsAsset = {
   assetType: "Rail Car",
   carrier: "Union Corridor Rail",
   customer: "Apex Retail",
-  location: { city: "Los Angeles", state: "CA", coordinates: [34.0522, -118.2437] },
+  location: { city: "Los Angeles Rail Yard", state: "CA", coordinates: LOS_ANGELES_RAIL_YARD_COORDINATE },
   destination: "Atlanta, GA",
   eta: "29h 40m",
   labelsPresent: 118,
@@ -422,7 +424,7 @@ const nycToBostonRoute: RouteWaypoint[] = [
 ];
 
 const losAngelesToAtlantaRailRoute: RouteWaypoint[] = [
-  { name: "Los Angeles, CA", coordinate: [34.0522, -118.2437], nodeType: "Origin" },
+  { name: "Los Angeles Rail Yard, CA", coordinate: LOS_ANGELES_RAIL_YARD_COORDINATE },
   { name: "San Bernardino, CA", coordinate: [34.1083, -117.2898] },
   { name: "Barstow, CA", coordinate: [34.8958, -117.0173] },
   { name: "Needles, CA", coordinate: [34.8481, -114.6141] },
@@ -485,7 +487,7 @@ const portOfLaToLaRailYardRoute: RouteWaypoint[] = [
   { name: "Terminal Island / Harbor Area, CA", coordinate: [33.7469, -118.2639] },
   { name: "I-110 Freight Corridor, CA", coordinate: [33.85, -118.28] },
   { name: "Vernon / Commerce Freight Area, CA", coordinate: [34.0039, -118.2301] },
-  { name: "Los Angeles Rail Yard, CA", coordinate: [34.0286, -118.227], nodeType: "Destination" },
+  { name: "Los Angeles Rail Yard, CA", coordinate: LOS_ANGELES_RAIL_YARD_COORDINATE, nodeType: "Destination" },
 ];
 
 const controlledRoutesByLaneId: Record<string, RouteWaypoint[]> = {
@@ -519,7 +521,7 @@ const DESTINATION_COORDINATES: Record<string, Coordinate> = {
   "Orlando Fulfillment": [28.5383, -81.3792],
   "Shanghai, China": [31.2304, 121.4737],
   "Frankfurt, Germany": [50.1109, 8.6821],
-  "Los Angeles Rail Yard, CA": [34.0286, -118.227],
+  "Los Angeles Rail Yard, CA": LOS_ANGELES_RAIL_YARD_COORDINATE,
 };
 
 const getRouteStyle = (riskStatus: LogisticsAsset["riskStatus"], hasIssue: boolean, mode: VehicleMode) => {
