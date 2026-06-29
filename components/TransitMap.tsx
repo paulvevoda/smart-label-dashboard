@@ -36,6 +36,7 @@ type RouteProfile = {
   laneId: string;
   waypoints: RouteWaypoint[];
 };
+type VehicleMode = "truck" | "rail";
 
 const SEATTLE_CHICAGO_ASSET_ID = "TR-SEA-CHI-90";
 const CHICAGO_ATLANTA_ASSET_ID = "TR-CHI-ATL-65";
@@ -43,6 +44,7 @@ const SEATTLE_RENO_ASSET_ID = "TR-SEA-RNO-395";
 const CHICAGO_NEWARK_ASSET_ID = "TR-CHI-EWR-80";
 const NYC_NEWARK_ASSET_ID = "TR-NYC-EWR-95";
 const NYC_BOSTON_ASSET_ID = "TR-NYC-BOS-95";
+const LOS_ANGELES_ATLANTA_RAIL_ASSET_ID = "RC-LA-ATL-40";
 
 const controlledRouteIdByAssetId: Record<string, string> = {
   "TR-SEA-12": "seattle-boise",
@@ -52,7 +54,10 @@ const controlledRouteIdByAssetId: Record<string, string> = {
   [CHICAGO_NEWARK_ASSET_ID]: "chicago-newark",
   [NYC_NEWARK_ASSET_ID]: "nyc-newark",
   [NYC_BOSTON_ASSET_ID]: "nyc-boston",
+  [LOS_ANGELES_ATLANTA_RAIL_ASSET_ID]: "los-angeles-atlanta-rail",
 };
+
+const railLaneIds = new Set(["los-angeles-atlanta-rail"]);
 
 const isDisabledLocalLaneAsset = (asset: LogisticsAsset) => {
   const originText = `${asset.location.city}, ${asset.location.state}`.toLowerCase();
@@ -198,6 +203,26 @@ const nycToBostonDemoAsset: LogisticsAsset = {
   labelId: "LBL-9895",
 };
 
+const losAngelesToAtlantaRailDemoAsset: LogisticsAsset = {
+  id: LOS_ANGELES_ATLANTA_RAIL_ASSET_ID,
+  assetType: "Rail Car",
+  carrier: "Union Corridor Rail",
+  customer: "Apex Retail",
+  location: { city: "Los Angeles", state: "CA", coordinates: [34.0522, -118.2437] },
+  destination: "Atlanta, GA",
+  eta: "29h 40m",
+  labelsPresent: 118,
+  labelsActive: 102,
+  labelsIdle: 9,
+  labelsOffline: 7,
+  negativeAlerts24h: 5,
+  negativeAlertRate: 0.0424,
+  riskStatus: "Warning",
+  battery: { healthy: 67, warning: 21, critical: 12 },
+  recentEvents: ["Shock Detected", "Shipment Departed"],
+  labelId: "LBL-4040",
+};
+
 const seattleToBoiseRoute: RouteWaypoint[] = [
   { name: "Seattle, WA", coordinate: [47.6062, -122.3321], nodeType: "Origin" },
   { name: "Snoqualmie Pass, WA", coordinate: [47.3923, -121.4001] },
@@ -299,6 +324,24 @@ const nycToBostonRoute: RouteWaypoint[] = [
   { name: "Boston, MA", coordinate: [42.3601, -71.0589], nodeType: "Destination" },
 ];
 
+const losAngelesToAtlantaRailRoute: RouteWaypoint[] = [
+  { name: "Los Angeles, CA", coordinate: [34.0522, -118.2437], nodeType: "Origin" },
+  { name: "San Bernardino, CA", coordinate: [34.1083, -117.2898] },
+  { name: "Barstow, CA", coordinate: [34.8958, -117.0173] },
+  { name: "Needles, CA", coordinate: [34.8481, -114.6141] },
+  { name: "Kingman, AZ", coordinate: [35.1894, -114.053] },
+  { name: "Flagstaff, AZ", coordinate: [35.1983, -111.6513] },
+  { name: "Gallup, NM", coordinate: [35.5281, -108.7426] },
+  { name: "Albuquerque, NM", coordinate: [35.0844, -106.6504] },
+  { name: "Clovis, NM", coordinate: [34.4048, -103.2052] },
+  { name: "Amarillo, TX", coordinate: [35.222, -101.8313] },
+  { name: "Oklahoma City, OK", coordinate: [35.4676, -97.5164] },
+  { name: "Fort Smith, AR", coordinate: [35.3859, -94.3985] },
+  { name: "Memphis, TN", coordinate: [35.1495, -90.049], nodeType: "Hub" },
+  { name: "Birmingham, AL", coordinate: [33.5186, -86.8104], nodeType: "Hub" },
+  { name: "Atlanta, GA", coordinate: [33.749, -84.388], nodeType: "Destination" },
+];
+
 const truckRoutesByLaneId: Record<string, RouteWaypoint[]> = {
   "seattle-boise": seattleToBoiseRoute,
   "seattle-chicago": seattleToChicagoRoute,
@@ -307,6 +350,7 @@ const truckRoutesByLaneId: Record<string, RouteWaypoint[]> = {
   "chicago-newark": chicagoToNewarkRoute,
   "nyc-newark": nycToNewarkRoute,
   "nyc-boston": nycToBostonRoute,
+  "los-angeles-atlanta-rail": losAngelesToAtlantaRailRoute,
 };
 
 const DESTINATION_COORDINATES: Record<string, Coordinate> = {
@@ -326,16 +370,18 @@ const DESTINATION_COORDINATES: Record<string, Coordinate> = {
   "Orlando Fulfillment": [28.5383, -81.3792],
 };
 
-const getRouteStyle = (riskStatus: LogisticsAsset["riskStatus"], hasIssue: boolean) => {
+const getRouteStyle = (riskStatus: LogisticsAsset["riskStatus"], hasIssue: boolean, mode: VehicleMode) => {
+  const railDash = mode === "rail" ? "11 6" : "";
+
   if (riskStatus === "Critical" || hasIssue) {
-    return { color: "#fb7185", weight: 4, opacity: 0.95, dashArray: "" };
+    return { color: "#fb7185", weight: 4, opacity: 0.95, dashArray: railDash };
   }
 
   if (riskStatus === "Warning") {
-    return { color: "#f59e0b", weight: 3.2, opacity: 0.8, dashArray: "8 6" };
+    return { color: "#f59e0b", weight: 3.2, opacity: 0.8, dashArray: mode === "rail" ? "11 6" : "8 6" };
   }
 
-  return { color: "#38bdf8", weight: 3, opacity: 0.75, dashArray: "" };
+  return { color: "#38bdf8", weight: 3, opacity: 0.75, dashArray: railDash };
 };
 
 const getLaneStyle = (riskStatus: LogisticsAsset["riskStatus"]) => {
@@ -392,7 +438,7 @@ const getBatteryPosture = (asset: LogisticsAsset) => {
   return "Healthy";
 };
 
-const getTruckIcon = (asset: LogisticsAsset, isSelected: boolean) => {
+const getVehicleIcon = (asset: LogisticsAsset, isSelected: boolean, mode: VehicleMode) => {
   const color = getTruckStatus(asset) === "Exception"
     ? "#fb7185"
     : getTruckStatus(asset) === "Warning"
@@ -409,12 +455,18 @@ const getTruckIcon = (asset: LogisticsAsset, isSelected: boolean) => {
       ? "#f59e0b"
       : "#64748b";
 
+  const glyph = mode === "rail"
+    ? `<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false" style="display:block;fill:#020617;">
+        <path d="M5 4h14c1.1 0 2 .9 2 2v7c0 1.3-.8 2.5-2 3l1.5 2v1h-2.4l-1.6-2h-9.1l-1.6 2H3.4v-1L5 16c-1.2-.5-2-1.7-2-3V6c0-1.1.9-2 2-2zm0 4v3h14V8H5zm3 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm8 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+      </svg>`
+    : `<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false" style="display:block;fill:#020617;">
+        <path d="M3 7h11v7h1.6c.7 0 1.3.3 1.7.8l2.7 3.2V21h-1.8a2.7 2.7 0 0 1-5.4 0H9.2a2.7 2.7 0 0 1-5.4 0H2v-3h1V7zm12 2v5h4.2l-2-2.4c-.2-.4-.6-.6-1-.6H15zM6.5 20a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4zm9 0a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4z"/>
+      </svg>`;
+
   return divIcon({
     html: `
       <div style="position:relative;display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:9999px;border:2px solid rgba(255,255,255,0.95);background:${color};box-shadow:${isSelected ? "0 0 0 7px rgba(34,211,238,0.26)" : "0 0 0 4px rgba(2,6,23,0.42)"};">
-        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false" style="display:block;fill:#020617;">
-          <path d="M3 7h11v7h1.6c.7 0 1.3.3 1.7.8l2.7 3.2V21h-1.8a2.7 2.7 0 0 1-5.4 0H9.2a2.7 2.7 0 0 1-5.4 0H2v-3h1V7zm12 2v5h4.2l-2-2.4c-.2-.4-.6-.6-1-.6H15zM6.5 20a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4zm9 0a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4z"/>
-        </svg>
+        ${glyph}
         ${hasExceptionBadge ? `<span style="position:absolute;right:-7px;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:9999px;border:2px solid rgba(255,255,255,0.95);background:${badgeColor};color:#020617;font-size:10px;font-weight:800;line-height:1;">${symbol}</span>` : ""}
       </div>
     `,
@@ -588,7 +640,11 @@ export default function TransitMap() {
       ? withNycNewark
       : [...withNycNewark, nycToBostonDemoAsset];
 
-    return withNycBoston;
+    const withLosAngelesAtlantaRail = withNycBoston.some((asset) => asset.id === LOS_ANGELES_ATLANTA_RAIL_ASSET_ID)
+      ? withNycBoston
+      : [...withNycBoston, losAngelesToAtlantaRailDemoAsset];
+
+    return withLosAngelesAtlantaRail;
   }, [state.assets]);
 
   const filteredAssets = useMemo(() => {
@@ -624,6 +680,7 @@ export default function TransitMap() {
     return {
       asset,
       laneId: routeProfile.laneId,
+      mode: railLaneIds.has(routeProfile.laneId) ? "rail" as const : "truck" as const,
       routeWaypoints: routeProfile.waypoints,
       waypoints,
       progress,
@@ -683,11 +740,11 @@ export default function TransitMap() {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
 
-              {routeSnapshots.map(({ asset, waypoints, laneId }) => (
+              {routeSnapshots.map(({ asset, waypoints, laneId, mode }) => (
                 <Polyline
                   key={`route-${asset.id}`}
                   positions={waypoints}
-                  pathOptions={getRouteStyle(asset.riskStatus, getMarkerSymbol(asset) !== "•")}
+                  pathOptions={getRouteStyle(asset.riskStatus, getMarkerSymbol(asset) !== "•", mode)}
                   eventHandlers={{ click: () => setSelectedAssetId(asset.id) }}
                 >
                   <Popup>
@@ -717,11 +774,11 @@ export default function TransitMap() {
                 </Marker>
               ))}
 
-              {routeSnapshots.map(({ asset, destination, progress, currentLeg, truckCoordinate }) => (
+              {routeSnapshots.map(({ asset, destination, progress, currentLeg, truckCoordinate, mode }) => (
                 <Marker
                   key={`truck-${asset.id}`}
                   position={truckCoordinate}
-                  icon={getTruckIcon(asset, selectedAssetId === asset.id)}
+                  icon={getVehicleIcon(asset, selectedAssetId === asset.id, mode)}
                   eventHandlers={{ click: () => setSelectedAssetId(asset.id) }}
                   zIndexOffset={selectedAssetId === asset.id ? 1000 : 700}
                 >
