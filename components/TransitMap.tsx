@@ -50,8 +50,30 @@ const seattleToBoiseRoute: RouteWaypoint[] = [
   { name: "Boise, ID", coordinate: [43.615, -116.2023], nodeType: "Destination" },
 ];
 
+const seattleToChicagoRoute: RouteWaypoint[] = [
+  { name: "Seattle, WA", coordinate: [47.6062, -122.3321], nodeType: "Origin" },
+  { name: "Snoqualmie Pass, WA", coordinate: [47.3923, -121.4001] },
+  { name: "Ellensburg, WA", coordinate: [46.9965, -120.5478] },
+  { name: "Moses Lake, WA", coordinate: [47.1301, -119.2781] },
+  { name: "Spokane, WA", coordinate: [47.6588, -117.426], nodeType: "Hub" },
+  { name: "Coeur d'Alene, ID", coordinate: [47.6777, -116.7805] },
+  { name: "Missoula, MT", coordinate: [46.8721, -113.994] },
+  { name: "Butte, MT", coordinate: [46.0038, -112.5348] },
+  { name: "Bozeman, MT", coordinate: [45.677, -111.0429] },
+  { name: "Billings, MT", coordinate: [45.7833, -108.5007], nodeType: "Hub" },
+  { name: "Sheridan, WY", coordinate: [44.7972, -106.9562] },
+  { name: "Rapid City, SD", coordinate: [44.0805, -103.231] },
+  { name: "Sioux Falls, SD", coordinate: [43.5446, -96.7311], nodeType: "Hub" },
+  { name: "Albert Lea, MN", coordinate: [43.648, -93.3683] },
+  { name: "La Crosse, WI", coordinate: [43.8138, -91.2519] },
+  { name: "Madison, WI", coordinate: [43.0731, -89.4012], nodeType: "Hub" },
+  { name: "Rockford, IL", coordinate: [42.2711, -89.0937] },
+  { name: "Chicago, IL", coordinate: [41.8781, -87.6298], nodeType: "Destination" },
+];
+
 const truckRoutesByLaneId: Record<string, RouteWaypoint[]> = {
   "seattle-boise": seattleToBoiseRoute,
+  "seattle-chicago": seattleToChicagoRoute,
 };
 
 const DESTINATION_COORDINATES: Record<string, Coordinate> = {
@@ -197,6 +219,10 @@ const getRouteLaneIdForAsset = (asset: LogisticsAsset) => {
 
   if (originCity.includes("seattle") && destinationText.includes("boise")) {
     return "seattle-boise";
+  }
+
+  if (originCity.includes("seattle") && destinationText.includes("chicago")) {
+    return "seattle-chicago";
   }
 
   return null;
