@@ -61,6 +61,23 @@ const isMiamiConnectedAsset = (asset: LogisticsAsset) => {
   return originText.includes("miami") || destinationText.includes("miami");
 };
 
+const isDisabledCityConnectedAsset = (asset: LogisticsAsset) => {
+  const originText = `${asset.location.city}, ${asset.location.state}`.toLowerCase();
+  const destinationText = asset.destination.toLowerCase();
+
+  const blockedCityTokens = [
+    "dallas",
+    "salt lake city",
+    "slc",
+    "denver",
+    "tx",
+    "ut",
+    "co",
+  ];
+
+  return blockedCityTokens.some((token) => originText.includes(token) || destinationText.includes(token));
+};
+
 const seattleToChicagoDemoAsset: LogisticsAsset = {
   id: SEATTLE_CHICAGO_ASSET_ID,
   assetType: "Truck",
@@ -160,8 +177,6 @@ const truckRoutesByLaneId: Record<string, RouteWaypoint[]> = {
 const DESTINATION_COORDINATES: Record<string, Coordinate> = {
   "Ontario Crossdock": [34.0633, -117.6509],
   "Boise Distribution Hub": [43.615, -116.2023],
-  "Salt Lake City": [40.7608, -111.891],
-  "Denver Yard": [39.7392, -104.9903],
   "Atlanta Hub": [33.749, -84.388],
   "New York / New Jersey": [40.7357, -74.1724],
   "Newark": [40.7357, -74.1724],
@@ -405,7 +420,9 @@ export default function TransitMap() {
 
   const mapAssets = useMemo(() => {
     const baseAssets = state.assets.filter((asset) => (
-      !isDisabledLocalLaneAsset(asset) && !isMiamiConnectedAsset(asset)
+      !isDisabledLocalLaneAsset(asset)
+      && !isMiamiConnectedAsset(asset)
+      && !isDisabledCityConnectedAsset(asset)
     ));
 
     const withSeattleChicago = baseAssets.some((asset) => asset.id === SEATTLE_CHICAGO_ASSET_ID)
