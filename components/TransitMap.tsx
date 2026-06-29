@@ -47,7 +47,7 @@ const NYC_BOSTON_ASSET_ID = "TR-NYC-BOS-95";
 const LOS_ANGELES_ATLANTA_RAIL_ASSET_ID = "RC-LA-ATL-40";
 const LOS_ANGELES_SHANGHAI_OCEAN_ASSET_ID = "CT-LA-SHA-88";
 const ATLANTA_FRANKFURT_AIR_ASSET_ID = "CT-ATL-FRA-74";
-const LOS_ANGELES_LONG_BEACH_ASSET_ID = "TR-LA-LGB-710";
+const PORT_LA_RAIL_YARD_ASSET_ID = "TR-PLA-LAX-110";
 
 const controlledRouteIdByAssetId: Record<string, string> = {
   "TR-SEA-12": "seattle-boise",
@@ -60,7 +60,7 @@ const controlledRouteIdByAssetId: Record<string, string> = {
   [LOS_ANGELES_ATLANTA_RAIL_ASSET_ID]: "los-angeles-atlanta-rail",
   [LOS_ANGELES_SHANGHAI_OCEAN_ASSET_ID]: "los-angeles-shanghai-ocean",
   [ATLANTA_FRANKFURT_AIR_ASSET_ID]: "atlanta-frankfurt-air",
-  [LOS_ANGELES_LONG_BEACH_ASSET_ID]: "los-angeles-long-beach",
+  [PORT_LA_RAIL_YARD_ASSET_ID]: "port-la-rail-yard",
 };
 
 const railLaneIds = new Set(["los-angeles-atlanta-rail"]);
@@ -292,14 +292,14 @@ const atlantaToFrankfurtAirDemoAsset: LogisticsAsset = {
   labelId: "LBL-7474",
 };
 
-const losAngelesToLongBeachDemoAsset: LogisticsAsset = {
-  id: LOS_ANGELES_LONG_BEACH_ASSET_ID,
+const portOfLaToLaRailYardDemoAsset: LogisticsAsset = {
+  id: PORT_LA_RAIL_YARD_ASSET_ID,
   assetType: "Truck",
   carrier: "Pacific Drayage Co.",
   customer: "Northwind Pharma",
-  location: { city: "Los Angeles", state: "CA", coordinates: [34.0522, -118.2437] },
-  destination: "Long Beach, CA",
-  eta: "1h 25m",
+  location: { city: "Port of Los Angeles", state: "CA", coordinates: [33.7405, -118.2775] },
+  destination: "Los Angeles Rail Yard, CA",
+  eta: "1h 10m",
   labelsPresent: 36,
   labelsActive: 31,
   labelsIdle: 3,
@@ -309,7 +309,7 @@ const losAngelesToLongBeachDemoAsset: LogisticsAsset = {
   riskStatus: "Warning",
   battery: { healthy: 77, warning: 16, critical: 7 },
   recentEvents: ["Route Deviation", "Shipment Departed"],
-  labelId: "LBL-1710",
+  labelId: "LBL-1110",
 };
 
 const seattleToBoiseRoute: RouteWaypoint[] = [
@@ -480,16 +480,12 @@ const atlantaToFrankfurtAirRoute: RouteWaypoint[] = [
   { name: "Frankfurt Airport, Germany", coordinate: [50.0379, 8.5622], nodeType: "Destination" },
 ];
 
-const losAngelesToLongBeachRoute: RouteWaypoint[] = [
-  { name: "Los Angeles, CA", coordinate: [34.0522, -118.2437], nodeType: "Origin" },
-  { name: "Vernon, CA", coordinate: [34.0039, -118.2301] },
-  { name: "Commerce, CA", coordinate: [34.0006, -118.1598] },
-  { name: "Bell Gardens / I-710 Corridor, CA", coordinate: [33.9653, -118.1515] },
-  { name: "South Gate, CA", coordinate: [33.9547, -118.212] },
-  { name: "Compton, CA", coordinate: [33.8958, -118.2201] },
-  { name: "Carson, CA", coordinate: [33.8314, -118.282] },
-  { name: "Port of Long Beach, CA", coordinate: [33.7542, -118.2165] },
-  { name: "Long Beach, CA", coordinate: [33.7701, -118.1937], nodeType: "Destination" },
+const portOfLaToLaRailYardRoute: RouteWaypoint[] = [
+  { name: "Port of Los Angeles, CA", coordinate: [33.7405, -118.2775], nodeType: "Origin" },
+  { name: "Terminal Island / Harbor Area, CA", coordinate: [33.7469, -118.2639] },
+  { name: "I-110 Freight Corridor, CA", coordinate: [33.85, -118.28] },
+  { name: "Vernon / Commerce Freight Area, CA", coordinate: [34.0039, -118.2301] },
+  { name: "Los Angeles Rail Yard, CA", coordinate: [34.0286, -118.227], nodeType: "Destination" },
 ];
 
 const controlledRoutesByLaneId: Record<string, RouteWaypoint[]> = {
@@ -503,7 +499,7 @@ const controlledRoutesByLaneId: Record<string, RouteWaypoint[]> = {
   "los-angeles-atlanta-rail": losAngelesToAtlantaRailRoute,
   "los-angeles-shanghai-ocean": losAngelesToShanghaiOceanRoute,
   "atlanta-frankfurt-air": atlantaToFrankfurtAirRoute,
-  "los-angeles-long-beach": losAngelesToLongBeachRoute,
+  "port-la-rail-yard": portOfLaToLaRailYardRoute,
 };
 
 const DESTINATION_COORDINATES: Record<string, Coordinate> = {
@@ -523,7 +519,7 @@ const DESTINATION_COORDINATES: Record<string, Coordinate> = {
   "Orlando Fulfillment": [28.5383, -81.3792],
   "Shanghai, China": [31.2304, 121.4737],
   "Frankfurt, Germany": [50.1109, 8.6821],
-  "Long Beach, CA": [33.7701, -118.1937],
+  "Los Angeles Rail Yard, CA": [34.0286, -118.227],
 };
 
 const getRouteStyle = (riskStatus: LogisticsAsset["riskStatus"], hasIssue: boolean, mode: VehicleMode) => {
@@ -831,11 +827,11 @@ export default function TransitMap() {
       ? withLosAngelesShanghaiOcean
       : [...withLosAngelesShanghaiOcean, atlantaToFrankfurtAirDemoAsset];
 
-    const withLosAngelesLongBeach = withAtlantaFrankfurtAir.some((asset) => asset.id === LOS_ANGELES_LONG_BEACH_ASSET_ID)
+    const withPortLaRailYard = withAtlantaFrankfurtAir.some((asset) => asset.id === PORT_LA_RAIL_YARD_ASSET_ID)
       ? withAtlantaFrankfurtAir
-      : [...withAtlantaFrankfurtAir, losAngelesToLongBeachDemoAsset];
+      : [...withAtlantaFrankfurtAir, portOfLaToLaRailYardDemoAsset];
 
-    return withLosAngelesLongBeach;
+    return withPortLaRailYard;
   }, [state.assets]);
 
   const filteredAssets = useMemo(() => {
