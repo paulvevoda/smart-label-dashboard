@@ -50,6 +50,7 @@ const LOS_ANGELES_ATLANTA_RAIL_ASSET_ID = "RC-LA-ATL-40";
 const LOS_ANGELES_SHANGHAI_OCEAN_ASSET_ID = "CT-LA-SHA-88";
 const ATLANTA_FRANKFURT_AIR_ASSET_ID = "CT-ATL-FRA-74";
 const PORT_LA_RAIL_YARD_ASSET_ID = "TR-PLA-LAX-110";
+const ATLANTA_HARTSFIELD_JACKSON_ASSET_ID = "TR-ATL-ATL-285";
 
 const controlledRouteIdByAssetId: Record<string, string> = {
   "TR-SEA-12": "seattle-boise",
@@ -63,6 +64,7 @@ const controlledRouteIdByAssetId: Record<string, string> = {
   [LOS_ANGELES_SHANGHAI_OCEAN_ASSET_ID]: "los-angeles-shanghai-ocean",
   [ATLANTA_FRANKFURT_AIR_ASSET_ID]: "atlanta-frankfurt-air",
   [PORT_LA_RAIL_YARD_ASSET_ID]: "port-la-rail-yard",
+  [ATLANTA_HARTSFIELD_JACKSON_ASSET_ID]: "atlanta-hartsfield-jackson",
 };
 
 const railLaneIds = new Set(["los-angeles-atlanta-rail"]);
@@ -314,6 +316,26 @@ const portOfLaToLaRailYardDemoAsset: LogisticsAsset = {
   labelId: "LBL-1110",
 };
 
+const atlantaToHartsfieldJacksonDemoAsset: LogisticsAsset = {
+  id: ATLANTA_HARTSFIELD_JACKSON_ASSET_ID,
+  assetType: "Truck",
+  carrier: "Peachtree Freight",
+  customer: "BluePeak Foods",
+  location: { city: "Atlanta", state: "GA", coordinates: [33.749, -84.388] },
+  destination: "Hartsfield-Jackson Atlanta International Airport, GA",
+  eta: "1h 05m",
+  labelsPresent: 29,
+  labelsActive: 25,
+  labelsIdle: 2,
+  labelsOffline: 2,
+  negativeAlerts24h: 1,
+  negativeAlertRate: 0.0345,
+  riskStatus: "Warning",
+  battery: { healthy: 74, warning: 18, critical: 8 },
+  recentEvents: ["Delay Hold", "Shipment Departed"],
+  labelId: "LBL-4285",
+};
+
 const seattleToBoiseRoute: RouteWaypoint[] = [
   { name: "Seattle, WA", coordinate: [47.6062, -122.3321], nodeType: "Origin" },
   { name: "Snoqualmie Pass, WA", coordinate: [47.3923, -121.4001] },
@@ -492,6 +514,14 @@ const portOfLaToLaRailYardRoute: RouteWaypoint[] = [
   { name: "Los Angeles Rail Yard, CA", coordinate: LOS_ANGELES_RAIL_YARD_COORDINATE, nodeType: "Destination" },
 ];
 
+const atlantaToHartsfieldJacksonRoute: RouteWaypoint[] = [
+  { name: "Atlanta, GA", coordinate: [33.749, -84.388], nodeType: "Origin" },
+  { name: "Downtown Connector, Atlanta, GA", coordinate: [33.735, -84.39] },
+  { name: "South Atlanta Freight Corridor, GA", coordinate: [33.7, -84.395] },
+  { name: "Airport Cargo Approach, GA", coordinate: [33.66, -84.41] },
+  { name: "Hartsfield-Jackson Atlanta International Airport, GA", coordinate: [33.6407, -84.4277], nodeType: "Destination" },
+];
+
 const controlledRoutesByLaneId: Record<string, RouteWaypoint[]> = {
   "seattle-boise": seattleToBoiseRoute,
   "seattle-chicago": seattleToChicagoRoute,
@@ -504,6 +534,7 @@ const controlledRoutesByLaneId: Record<string, RouteWaypoint[]> = {
   "los-angeles-shanghai-ocean": losAngelesToShanghaiOceanRoute,
   "atlanta-frankfurt-air": atlantaToFrankfurtAirRoute,
   "port-la-rail-yard": portOfLaToLaRailYardRoute,
+  "atlanta-hartsfield-jackson": atlantaToHartsfieldJacksonRoute,
 };
 
 const DESTINATION_COORDINATES: Record<string, Coordinate> = {
@@ -524,6 +555,7 @@ const DESTINATION_COORDINATES: Record<string, Coordinate> = {
   "Shanghai, China": [31.2304, 121.4737],
   "Frankfurt, Germany": [50.1109, 8.6821],
   "Los Angeles Rail Yard, CA": LOS_ANGELES_RAIL_YARD_COORDINATE,
+  "Hartsfield-Jackson Atlanta International Airport, GA": [33.6407, -84.4277],
 };
 
 const getRouteStyle = (riskStatus: LogisticsAsset["riskStatus"], hasIssue: boolean, mode: VehicleMode) => {
@@ -838,7 +870,11 @@ export default function TransitMap() {
       ? withAtlantaFrankfurtAir
       : [...withAtlantaFrankfurtAir, portOfLaToLaRailYardDemoAsset];
 
-    return withPortLaRailYard;
+    const withAtlantaHartsfieldJackson = withPortLaRailYard.some((asset) => asset.id === ATLANTA_HARTSFIELD_JACKSON_ASSET_ID)
+      ? withPortLaRailYard
+      : [...withPortLaRailYard, atlantaToHartsfieldJacksonDemoAsset];
+
+    return withAtlantaHartsfieldJackson;
   }, [state.assets]);
 
   const filteredAssets = useMemo(() => {
