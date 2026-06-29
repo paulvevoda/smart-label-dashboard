@@ -666,10 +666,9 @@ const getVehicleIcon = (asset: LogisticsAsset, isSelected: boolean, mode: Vehicl
       </svg>`
       : mode === "air"
         ? `<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false" style="display:block;fill:#020617;">
-          <path d="M11.3 2.4h1.4c.6 0 1 .4 1.1.9l.5 2.1h1.2c.7 0 1.3.6 1.3 1.3v1.2h4.8c.6 0 1 .4 1 1v1.5c0 .6-.4 1-1 1h-4.3l-2.4 2.6h-1.9v1.2h3.5c.6 0 1 .4 1 1v1.1c0 .6-.4 1-1 1h-3.6l-.4 2.2c-.1.5-.5.9-1.1.9h-1c-.5 0-1-.4-1.1-.9l-.4-2.2H7.2c-.6 0-1-.4-1-1v-1.1c0-.6.4-1 1-1h3.5V14h-1.9l-2.4-2.6H2.1c-.6 0-1-.4-1-1V8.9c0-.6.4-1 1-1h4.8V6.7c0-.7.6-1.3 1.3-1.3h1.2l.5-2.1c.1-.5.5-.9 1.1-.9zm-.8 5v1.2h3V7.4h-3zm-3.1 3.2 1.8 1.8h5.6l1.8-1.8H7.4zm4.6 3.6v2.1h.6v-2.1H12zm-3.2 3.7v.5h6.4v-.5H8.8z"/>
-          <ellipse cx="8" cy="13.6" rx="1.2" ry="1.5" />
-          <ellipse cx="16" cy="13.6" rx="1.2" ry="1.5" />
-          <rect x="10.9" y="19.2" width="2.2" height="2" rx="0.5" />
+          <rect x="11.2" y="3.4" width="1.6" height="3.2" rx="0.8" />
+          <rect x="4.2" y="10.3" width="15.6" height="2.2" rx="1.1" />
+          <ellipse cx="12" cy="14.4" rx="2.2" ry="3" />
       </svg>`
       : `<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false" style="display:block;fill:#020617;">
         <path d="M3 7h11v7h1.6c.7 0 1.3.3 1.7.8l2.7 3.2V21h-1.8a2.7 2.7 0 0 1-5.4 0H9.2a2.7 2.7 0 0 1-5.4 0H2v-3h1V7zm12 2v5h4.2l-2-2.4c-.2-.4-.6-.6-1-.6H15zM6.5 20a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4zm9 0a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4z"/>
