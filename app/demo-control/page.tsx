@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useState } from "react";
 import AppShell from "@/components/AppShell";
 import DemoActivityLog from "@/components/DemoActivityLog";
@@ -10,10 +9,9 @@ import DemoNetworkControls from "@/components/DemoNetworkControls";
 import DemoNodeControls from "@/components/DemoNodeControls";
 import DemoScenarioSummary from "@/components/DemoScenarioSummary";
 import DemoTransitLaneControls from "@/components/DemoTransitLaneControls";
+import TransitMapClient from "@/components/TransitMapClient";
 import PageHeader from "@/components/ui/PageHeader";
 import { useDemoState } from "@/context/DemoStateContext";
-
-const DemoNetworkMap = dynamic(() => import("@/components/DemoNetworkMap"), { ssr: false });
 
 export default function DemoControlPage() {
   const [feedback, setFeedback] = useState("Scenario presets and live controls update the shared demo state across the investor workspace.");
@@ -73,7 +71,18 @@ export default function DemoControlPage() {
             setFeedback("Activity log cleared for the next demo beat.");
           }}
         />
-        <DemoNetworkMap />
+        <section className="rounded-[1.5rem] border border-white/10 bg-slate-900/70 p-4 shadow-2xl shadow-black/20">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 className="text-lg font-semibold text-white">Live shipment map</h2>
+              <p className="text-sm text-slate-400">Map reflects demo-control changes in real time.</p>
+            </div>
+            <span className="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-200">Shared transit state</span>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-2">
+            <TransitMapClient />
+          </div>
+        </section>
         <DemoNodeControls state={state} onAddNode={addNode} onSetNodeLabels={setNodeLabels} onToggleNodeAlert={toggleNodeAlert} />
         <DemoTransitLaneControls state={state} onAddLane={addLane} onSetLaneRisk={setLaneRisk} onSimulateDelay={simulateShipmentDelay} />
         <DemoAssetControls state={state} onAddAsset={addAsset} onSetAssetLocation={setAssetLocation} onSetAssetBattery={setAssetBattery} onSimulateAlert={(assetId) => simulateAlert(assetId, "Temperature Alert", "Warning")} onSimulateBatteryWarning={simulateBatteryWarning} />
