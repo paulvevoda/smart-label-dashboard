@@ -12,6 +12,10 @@ const TransitMap = dynamic(() => import("@/components/TransitMap"), {
   ),
 });
 
-export default function TransitMapClient() {
-  return <TransitMap />;
+type TransitMapClientProps = {
+  initialSelectedAssetId?: string;
+};
+
+export default function TransitMapClient({ initialSelectedAssetId }: TransitMapClientProps) {
+  return <TransitMap initialSelectedAssetId={initialSelectedAssetId} />;
 }

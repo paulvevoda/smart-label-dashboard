@@ -6,6 +6,9 @@ export type RiskStatus = "Normal" | "Warning" | "Critical";
 export type TransitShipmentStatus = "on-track" | "delayed" | "early" | "completed";
 export type ShipmentStatus = "On Time" | "Delayed" | "At Risk";
 export type ShipmentActivity = "Active" | "Idle" | "Expected Delivery Next 24 Hours";
+export type TransportMode = "truck" | "rail" | "air" | "vessel";
+export type ShipmentRouteType = "solid" | "dashed" | "dotted" | "dash-dot";
+export type ShipmentTransitStatus = "on-track" | "delayed" | "early" | "completed";
 export type AlertSeverity = "Normal" | "Warning" | "Critical";
 export type AlertStatus = "Active" | "Resolved";
 export type SensorEventType =
@@ -96,12 +99,18 @@ export type Shipment = {
   customer: string;
   origin: string;
   destination: string;
+  mode: TransportMode;
+  routeType?: ShipmentRouteType;
   status: ShipmentStatus;
+  transitStatus?: ShipmentTransitStatus;
   activity: ShipmentActivity;
   assignedLabels: number;
   assignedAsset: string;
+  mapAssetId?: string;
   eta: string;
+  plannedArrival?: string;
   currentLocation: string;
+  currentNode?: string;
   recentEvents: string[];
 };
 

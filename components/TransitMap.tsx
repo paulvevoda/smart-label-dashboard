@@ -1038,12 +1038,16 @@ const computeProgress = (asset: LogisticsAsset, tick: number, routeWaypoints: Ro
   return Math.min(0.98, Math.max(0.05, advanced));
 };
 
-export default function TransitMap() {
+type TransitMapProps = {
+  initialSelectedAssetId?: string;
+};
+
+export default function TransitMap({ initialSelectedAssetId }: TransitMapProps) {
   const { state } = useDemoState();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [criticalOnly, setCriticalOnly] = useState(false);
-  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(initialSelectedAssetId ?? null);
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
@@ -1138,6 +1142,11 @@ export default function TransitMap() {
     const stillVisible = filteredAssets.some((asset) => asset.id === selectedAssetId);
     if (!stillVisible) setSelectedAssetId(null);
   }, [filteredAssets, selectedAssetId]);
+
+  useEffect(() => {
+    if (!initialSelectedAssetId) return;
+    setSelectedAssetId(initialSelectedAssetId);
+  }, [initialSelectedAssetId]);
 
   const routeSnapshots = useMemo(() => filteredAssets.map((asset) => {
     const routeProfile = getRouteProfileForAsset(asset, state.nodes);

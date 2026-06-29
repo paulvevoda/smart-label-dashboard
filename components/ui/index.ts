@@ -8,3 +8,4 @@ export { default as EmptyState } from "./EmptyState";
 export { default as SectionHeader } from "./SectionHeader";
 export { default as TableShell } from "./TableShell";
 export { default as Panel } from "./Panel";
+export { default as TransportModeIcon } from "./TransportModeIcon";
