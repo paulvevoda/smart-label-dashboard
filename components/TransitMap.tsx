@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { divIcon } from "leaflet";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "leaflet/dist/leaflet.css";
 
 import AssetDetailPanel from "@/components/AssetDetailPanel";
@@ -11,13 +11,29 @@ import TransitMapControls from "@/components/TransitMapControls";
 import Card from "@/components/ui/Card";
 import { useDemoState } from "@/context/DemoStateContext";
 import { getRiskColor } from "@/data";
-import type { LogisticsAsset } from "@/data/types";
+import type { LogisticsAsset, LogisticsNode } from "@/data/types";
 
 const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false });
 const Marker = dynamic(() => import("react-leaflet").then((mod) => mod.Marker), { ssr: false });
 const Polyline = dynamic(() => import("react-leaflet").then((mod) => mod.Polyline), { ssr: false });
 const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), { ssr: false });
+
+type Coordinate = [number, number];
+
+const DESTINATION_COORDINATES: Record<string, Coordinate> = {
+  "Ontario Crossdock": [34.0633, -117.6509],
+  "Boise Distribution Hub": [43.615, -116.2023],
+  "Salt Lake City": [40.7608, -111.891],
+  "Denver Yard": [39.7392, -104.9903],
+  "Atlanta Hub": [33.749, -84.388],
+  "New York / New Jersey": [40.7357, -74.1724],
+  "Newark": [40.7357, -74.1724],
+  "Newark Yard": [40.7357, -74.1724],
+  "Miami Port": [25.7781, -80.1794],
+  "Boston Market": [42.3601, -71.0589],
+  "Orlando Fulfillment": [28.5383, -81.3792],
+};
 
 const getRouteStyle = (riskStatus: LogisticsAsset["riskStatus"], hasIssue: boolean) => {
   if (riskStatus === "Critical" || hasIssue) {
@@ -29,6 +45,12 @@ const getRouteStyle = (riskStatus: LogisticsAsset["riskStatus"], hasIssue: boole
   }
 
   return { color: "#38bdf8", weight: 3, opacity: 0.75, dashArray: "" };
+};
+
+const getLaneStyle = (riskStatus: LogisticsAsset["riskStatus"]) => {
+  if (riskStatus === "Critical") return { color: "#fb7185", weight: 2.2, opacity: 0.35, dashArray: "7 7" };
+  if (riskStatus === "Warning") return { color: "#f59e0b", weight: 2, opacity: 0.32, dashArray: "7 7" };
+  return { color: "#94a3b8", weight: 1.8, opacity: 0.3, dashArray: "6 8" };
 };
 
 const getMarkerSymbol = (asset: LogisticsAsset) => {
@@ -55,12 +77,197 @@ const getMarkerIcon = (asset: LogisticsAsset, isSelected: boolean) => {
   });
 };
 
+const getTruckStatus = (asset: LogisticsAsset) => {
+  if (asset.recentEvents.some((event) => event.toLowerCase().includes("delivered"))) return "Delivered";
+  if (asset.riskStatus === "Critical") return "Exception";
+  if (asset.riskStatus === "Warning") return "Warning";
+  return "On Track";
+};
+
+const getActiveAlertSummary = (asset: LogisticsAsset) => {
+  const critical = asset.recentEvents.find((event) => /tamper|offline|shock/i.test(event));
+  const warning = asset.recentEvents.find((event) => /temperature|humidity|light|battery|delay|hold|route/i.test(event));
+  return critical ?? warning ?? "No active exception";
+};
+
+const getBatteryPosture = (asset: LogisticsAsset) => {
+  if (asset.battery.critical >= asset.battery.warning && asset.battery.critical >= asset.battery.healthy) return "Critical";
+  if (asset.battery.warning >= asset.battery.healthy) return "Warning";
+  return "Healthy";
+};
+
+const getTruckIcon = (asset: LogisticsAsset, isSelected: boolean) => {
+  const color = getTruckStatus(asset) === "Exception"
+    ? "#fb7185"
+    : getTruckStatus(asset) === "Warning"
+      ? "#f59e0b"
+      : getTruckStatus(asset) === "Delivered"
+        ? "#34d399"
+        : "#22d3ee";
+
+  return divIcon({
+    html: `
+      <div style="position:relative;display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:9999px;border:2px solid rgba(255,255,255,0.95);background:${color};box-shadow:${isSelected ? "0 0 0 7px rgba(34,211,238,0.26)" : "0 0 0 4px rgba(2,6,23,0.42)"};">
+        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false" style="display:block;fill:#020617;">
+          <path d="M3 7h11v7h1.6c.7 0 1.3.3 1.7.8l2.7 3.2V21h-1.8a2.7 2.7 0 0 1-5.4 0H9.2a2.7 2.7 0 0 1-5.4 0H2v-3h1V7zm12 2v5h4.2l-2-2.4c-.2-.4-.6-.6-1-.6H15zM6.5 20a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4zm9 0a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4z"/>
+        </svg>
+      </div>
+    `,
+    className: "border-0 bg-transparent",
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+    popupAnchor: [0, -18],
+  });
+};
+
+const getExceptionMarkerIcon = (asset: LogisticsAsset, isSelected: boolean) => {
+  const color = getRiskColor(asset.riskStatus);
+  const symbol = getMarkerSymbol(asset);
+
+  return divIcon({
+    html: `<div style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:9999px;border:2px solid rgba(255,255,255,0.95);background:${color};color:${isSelected ? "#f8fafc" : "#020617"};box-shadow:${isSelected ? "0 0 0 5px rgba(251,113,133,0.25)" : "0 0 0 4px rgba(2,6,23,0.38)"};font-size:11px;font-weight:800;">${symbol}</div>`,
+    className: "border-0 bg-transparent",
+    iconSize: [26, 26],
+    iconAnchor: [13, 13],
+    popupAnchor: [0, -13],
+  });
+};
+
+const parseEtaHours = (eta: string) => {
+  const hoursMatch = eta.match(/(\d+)\s*h/i);
+  const minutesMatch = eta.match(/(\d+)\s*m/i);
+  const hours = hoursMatch ? Number(hoursMatch[1]) : 0;
+  const minutes = minutesMatch ? Number(minutesMatch[1]) : 0;
+  return Math.max(0.5, hours + (minutes / 60));
+};
+
+const hashId = (input: string) => {
+  let hash = 0;
+  for (let index = 0; index < input.length; index += 1) {
+    hash = ((hash << 5) - hash) + input.charCodeAt(index);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+};
+
+const midpoint = (first: Coordinate, second: Coordinate): Coordinate => [
+  Number(((first[0] + second[0]) / 2).toFixed(4)),
+  Number(((first[1] + second[1]) / 2).toFixed(4)),
+];
+
+const resolveDestinationCoordinate = (asset: LogisticsAsset, nodes: LogisticsNode[]): Coordinate => {
+  const destinationText = asset.destination.toLowerCase();
+  const matchedNode = nodes.find((node) => destinationText.includes(node.city.toLowerCase()));
+  if (matchedNode) return matchedNode.coordinates;
+  return DESTINATION_COORDINATES[asset.destination] ?? asset.location.coordinates;
+};
+
+const buildRouteCorridor = (origin: Coordinate, destination: Coordinate): Coordinate[] => {
+  const [originLat, originLng] = origin;
+  const [destinationLat, destinationLng] = destination;
+
+  if (originLng < -115 && destinationLng > -112 && destinationLng < -104) {
+    const sacramento: Coordinate = [38.5816, -121.4944];
+    const reno: Coordinate = [39.5296, -119.8138];
+    const saltLake: Coordinate = [40.7608, -111.891];
+    return [origin, midpoint(origin, sacramento), sacramento, reno, midpoint(reno, saltLake), destination];
+  }
+
+  if (originLng < -112 && destinationLng > -100 && destinationLng < -82) {
+    const phoenix: Coordinate = [33.4484, -112.074];
+    const elPaso: Coordinate = [31.7619, -106.485];
+    const dallas: Coordinate = [32.7767, -96.797];
+    const jackson: Coordinate = [32.2988, -90.1848];
+    return [origin, midpoint(origin, phoenix), phoenix, elPaso, dallas, jackson, destination];
+  }
+
+  if (originLng > -104 && destinationLng > -90 && destinationLng < -74) {
+    const stLouis: Coordinate = [38.627, -90.1994];
+    const columbus: Coordinate = [39.9612, -82.9988];
+    const pittsburgh: Coordinate = [40.4406, -79.9959];
+    return [origin, midpoint(origin, stLouis), stLouis, columbus, pittsburgh, destination];
+  }
+
+  if (originLat < 36 && destinationLat < 36 && destinationLng > -96) {
+    const mobile: Coordinate = [30.6954, -88.0399];
+    const tallahassee: Coordinate = [30.4383, -84.2807];
+    return [origin, midpoint(origin, mobile), mobile, tallahassee, destination];
+  }
+
+  const denver: Coordinate = [39.7392, -104.9903];
+  const kansasCity: Coordinate = [39.0997, -94.5786];
+  return [origin, midpoint(origin, denver), denver, kansasCity, midpoint(kansasCity, destination), destination];
+};
+
+const distanceBetween = (a: Coordinate, b: Coordinate) => {
+  const dx = b[1] - a[1];
+  const dy = b[0] - a[0];
+  return Math.sqrt((dx * dx) + (dy * dy));
+};
+
+const interpolatePointAlongRoute = (points: Coordinate[], progress: number): { coordinate: Coordinate; legLabel: string } => {
+  if (points.length <= 1) return { coordinate: points[0] ?? [39.5, -98.35], legLabel: "Route unavailable" };
+
+  const boundedProgress = Math.min(0.99, Math.max(0, progress));
+  const segments = points.slice(0, -1).map((point, index) => {
+    const next = points[index + 1];
+    return {
+      start: point,
+      end: next,
+      distance: distanceBetween(point, next),
+      index,
+    };
+  });
+
+  const totalDistance = segments.reduce((sum, segment) => sum + segment.distance, 0);
+  if (totalDistance <= 0) return { coordinate: points[0], legLabel: "Starting segment" };
+
+  let target = boundedProgress * totalDistance;
+  for (const segment of segments) {
+    if (target <= segment.distance) {
+      const ratio = segment.distance === 0 ? 0 : target / segment.distance;
+      const coordinate: Coordinate = [
+        Number((segment.start[0] + ((segment.end[0] - segment.start[0]) * ratio)).toFixed(5)),
+        Number((segment.start[1] + ((segment.end[1] - segment.start[1]) * ratio)).toFixed(5)),
+      ];
+      return {
+        coordinate,
+        legLabel: `Leg ${segment.index + 1} of ${segments.length}`,
+      };
+    }
+    target -= segment.distance;
+  }
+
+  return { coordinate: points[points.length - 1], legLabel: `Leg ${segments.length} of ${segments.length}` };
+};
+
+const computeProgress = (asset: LogisticsAsset, tick: number) => {
+  const seed = hashId(asset.id);
+  const baseProgress = (seed % 42) / 100;
+  const etaHours = parseEtaHours(asset.eta);
+  const speed = Math.max(0.0035, Math.min(0.014, 0.018 / etaHours));
+  const advanced = (baseProgress + (tick * speed)) % 1;
+
+  if (getTruckStatus(asset) === "Delivered") return 1;
+  if (getTruckStatus(asset) === "Exception") return Math.min(0.92, advanced);
+  return Math.min(0.98, Math.max(0.05, advanced));
+};
+
 export default function TransitMap() {
   const { state } = useDemoState();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [criticalOnly, setCriticalOnly] = useState(false);
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(state.assets[0]?.id ?? null);
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setTick((value) => value + 1);
+    }, 2800);
+
+    return () => window.clearInterval(interval);
+  }, []);
 
   const filteredAssets = useMemo(() => {
     return state.assets.filter((asset) => {
@@ -85,6 +292,44 @@ export default function TransitMap() {
 
   const selectedAsset = filteredAssets.find((asset) => asset.id === selectedAssetId) ?? null;
 
+  const lanePositions = useMemo(() => state.lanes.map((lane) => {
+    const origin = state.nodes.find((node) => node.id === lane.originNode)?.coordinates;
+    const destination = state.nodes.find((node) => node.id === lane.destinationNode)?.coordinates;
+    return {
+      lane,
+      positions: origin && destination ? [origin, destination] : [],
+    };
+  }), [state.lanes, state.nodes]);
+
+  const routeSnapshots = useMemo(() => filteredAssets.map((asset) => {
+    const destination = resolveDestinationCoordinate(asset, state.nodes);
+    const waypoints = buildRouteCorridor(asset.location.coordinates, destination);
+    const progress = computeProgress(asset, tick);
+    const point = interpolatePointAlongRoute(waypoints, progress);
+
+    return {
+      asset,
+      waypoints,
+      progress,
+      truckCoordinate: point.coordinate,
+      currentLeg: point.legLabel,
+      destination,
+    };
+  }), [filteredAssets, state.nodes, tick]);
+
+  const exceptionMarkers = useMemo(() => routeSnapshots
+    .filter(({ asset }) => getMarkerSymbol(asset) !== "•")
+    .map((snapshot) => {
+      const offsetSeed = hashId(snapshot.asset.id) % 2 === 0 ? 0.22 : -0.22;
+      return {
+        ...snapshot,
+        coordinate: [
+          Number((snapshot.truckCoordinate[0] + (offsetSeed * 0.5)).toFixed(5)),
+          Number((snapshot.truckCoordinate[1] - offsetSeed).toFixed(5)),
+        ] as Coordinate,
+      };
+    }), [routeSnapshots]);
+
   return (
     <div className="space-y-6">
       <TransitMapControls
@@ -105,34 +350,86 @@ export default function TransitMap() {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
 
-              {state.lanes.map((lane) => {
-                const hasIssue = lane.recentAlertActivity.length > 0;
-                const style = getRouteStyle(lane.riskStatus, hasIssue);
-                return (
+              {lanePositions.map(({ lane, positions }) => (
+                positions.length > 1 ? (
                   <Polyline
                     key={lane.id}
-                    positions={state.nodes.filter((node) => [lane.originNode, lane.destinationNode].includes(node.id)).map((node) => node.coordinates)}
-                    pathOptions={style}
-                  />
-                );
-              })}
+                    positions={positions}
+                    pathOptions={getLaneStyle(lane.riskStatus)}
+                  >
+                    <Popup>
+                      <div className="min-w-[200px] text-sm text-slate-700">
+                        <p className="font-semibold text-slate-900">{lane.corridor}</p>
+                        <p className="mt-1 text-slate-600">Lane {lane.id}</p>
+                        <p className="mt-2 text-slate-600">Risk posture: {lane.riskStatus}</p>
+                        <p className="mt-1 text-slate-600">Assets in transit: {lane.assetsInTransit}</p>
+                      </div>
+                    </Popup>
+                  </Polyline>
+                ) : null
+              ))}
 
-              {filteredAssets.map((asset) => (
+              {routeSnapshots.map(({ asset, waypoints }) => (
+                <Polyline
+                  key={`route-${asset.id}`}
+                  positions={waypoints}
+                  pathOptions={getRouteStyle(asset.riskStatus, getMarkerSymbol(asset) !== "•")}
+                  eventHandlers={{ click: () => setSelectedAssetId(asset.id) }}
+                />
+              ))}
+
+              {routeSnapshots.map(({ asset, destination, progress, currentLeg, truckCoordinate }) => (
                 <Marker
-                  key={asset.id}
-                  position={asset.location.coordinates}
-                  icon={getMarkerIcon(asset, selectedAssetId === asset.id)}
+                  key={`truck-${asset.id}`}
+                  position={truckCoordinate}
+                  icon={getTruckIcon(asset, selectedAssetId === asset.id)}
                   eventHandlers={{ click: () => setSelectedAssetId(asset.id) }}
                   zIndexOffset={selectedAssetId === asset.id ? 1000 : 0}
                 >
                   <Popup>
-                    <div className="min-w-[180px] text-sm text-slate-700">
-                      <p className="font-semibold text-slate-900">{asset.id}</p>
+                    <div className="min-w-[240px] text-sm text-slate-700">
+                      <p className="font-semibold text-slate-900">Shipment {asset.id}</p>
                       <p className="mt-1 text-slate-600">{asset.assetType} · {asset.carrier}</p>
-                      <p className="mt-2 text-slate-600">{asset.location.city}, {asset.location.state}</p>
+                      <p className="mt-2 text-slate-600">{asset.location.city}, {asset.location.state} → {asset.destination}</p>
+                      <div className="mt-3 space-y-1 text-slate-600">
+                        <p>Status: <span className="font-medium text-slate-900">{getTruckStatus(asset)}</span></p>
+                        <p>{currentLeg} · {Math.round(progress * 100)}% complete</p>
+                        <p>ETA: {asset.eta}</p>
+                        <p>Active signal: {getActiveAlertSummary(asset)}</p>
+                        <p>Battery posture: {getBatteryPosture(asset)}</p>
+                      </div>
+                      <p className="mt-2 text-xs text-slate-500">Destination approx: {destination[0].toFixed(2)}, {destination[1].toFixed(2)}</p>
                     </div>
                   </Popup>
                 </Marker>
+              ))}
+
+              {exceptionMarkers.map(({ asset, coordinate }) => (
+                <Marker
+                  key={`exception-${asset.id}`}
+                  position={coordinate}
+                  icon={getExceptionMarkerIcon(asset, selectedAssetId === asset.id)}
+                  eventHandlers={{ click: () => setSelectedAssetId(asset.id) }}
+                  zIndexOffset={selectedAssetId === asset.id ? 900 : 500}
+                >
+                  <Popup>
+                    <div className="min-w-[220px] text-sm text-slate-700">
+                      <p className="font-semibold text-slate-900">Exception marker {getMarkerSymbol(asset)}</p>
+                      <p className="mt-1 text-slate-600">Shipment {asset.id}</p>
+                      <p className="mt-2 text-slate-600">Recent event: {getActiveAlertSummary(asset)}</p>
+                    </div>
+                  </Popup>
+                </Marker>
+              ))}
+
+              {filteredAssets.map((asset) => (
+                <Marker
+                  key={`asset-location-${asset.id}`}
+                  position={asset.location.coordinates}
+                  icon={getMarkerIcon(asset, selectedAssetId === asset.id)}
+                  eventHandlers={{ click: () => setSelectedAssetId(asset.id) }}
+                  zIndexOffset={selectedAssetId === asset.id ? 700 : 300}
+                />
               ))}
             </MapContainer>
           </div>
