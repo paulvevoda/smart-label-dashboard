@@ -1,5 +1,4 @@
 import Card from "@/components/ui/Card";
-import StatusBadge from "@/components/ui/StatusBadge";
 import type { BillingSettings } from "@/data/types";
 
 type BillingSettingsCardProps = {
@@ -21,10 +20,6 @@ export default function BillingSettingsCard({ settings }: BillingSettingsCardPro
         <div className="rounded-[1.25rem] border border-white/10 bg-slate-950/70 p-4">
           <p className="text-sm text-slate-400">Billing model</p>
           <p className="mt-2 text-base font-semibold text-white">{settings.billingModel}</p>
-        </div>
-        <div className="rounded-[1.25rem] border border-white/10 bg-slate-950/70 p-4">
-          <p className="text-sm text-slate-400">Usage tier</p>
-          <div className="mt-2"><StatusBadge label={settings.usageTier} tone="normal" /></div>
         </div>
         <div className="rounded-[1.25rem] border border-white/10 bg-slate-950/70 p-4 md:col-span-2 xl:col-span-4">
           <p className="text-sm text-slate-400">Next invoice</p>
