@@ -67,15 +67,7 @@ const isDisabledCityConnectedAsset = (asset: LogisticsAsset) => {
   const originText = `${asset.location.city}, ${asset.location.state}`.toLowerCase();
   const destinationText = asset.destination.toLowerCase();
 
-  const blockedCityTokens = [
-    "dallas",
-    "salt lake city",
-    "slc",
-    "denver",
-    "tx",
-    "ut",
-    "co",
-  ];
+  const blockedCityTokens = ["dallas", "salt lake city", "slc", "denver"];
 
   return blockedCityTokens.some((token) => originText.includes(token) || destinationText.includes(token));
 };
