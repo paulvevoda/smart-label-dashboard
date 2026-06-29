@@ -37,6 +37,33 @@ type RouteProfile = {
   waypoints: RouteWaypoint[];
 };
 
+const SEATTLE_CHICAGO_ASSET_ID = "TR-SEA-CHI-90";
+
+const controlledRouteIdByAssetId: Record<string, string> = {
+  "TR-SEA-12": "seattle-boise",
+  [SEATTLE_CHICAGO_ASSET_ID]: "seattle-chicago",
+};
+
+const seattleToChicagoDemoAsset: LogisticsAsset = {
+  id: SEATTLE_CHICAGO_ASSET_ID,
+  assetType: "Truck",
+  carrier: "Northstar Logistics",
+  customer: "Apex Retail",
+  location: { city: "Seattle", state: "WA", coordinates: [47.6062, -122.3321] },
+  destination: "Chicago, IL",
+  eta: "18h 40m",
+  labelsPresent: 76,
+  labelsActive: 68,
+  labelsIdle: 5,
+  labelsOffline: 3,
+  negativeAlerts24h: 2,
+  negativeAlertRate: 0.0263,
+  riskStatus: "Warning",
+  battery: { healthy: 72, warning: 18, critical: 10 },
+  recentEvents: ["Battery Warning", "Shipment Departed"],
+  labelId: "LBL-9090",
+};
+
 const seattleToBoiseRoute: RouteWaypoint[] = [
   { name: "Seattle, WA", coordinate: [47.6062, -122.3321], nodeType: "Origin" },
   { name: "Snoqualmie Pass, WA", coordinate: [47.3923, -121.4001] },
@@ -87,6 +114,7 @@ const DESTINATION_COORDINATES: Record<string, Coordinate> = {
   "Newark Yard": [40.7357, -74.1724],
   "Miami Port": [25.7781, -80.1794],
   "Boston Market": [42.3601, -71.0589],
+  "Chicago, IL": [41.8781, -87.6298],
   "Orlando Fulfillment": [28.5383, -81.3792],
 };
 
@@ -214,6 +242,10 @@ const resolveDestinationCoordinate = (asset: LogisticsAsset, nodes: LogisticsNod
 };
 
 const getRouteLaneIdForAsset = (asset: LogisticsAsset) => {
+  // Controlled truck route lookup: asset.id -> truckRoutesByLaneId[routeId]
+  const explicitRouteId = controlledRouteIdByAssetId[asset.id];
+  if (explicitRouteId) return explicitRouteId;
+
   const originCity = asset.location.city.toLowerCase();
   const destinationText = asset.destination.toLowerCase();
 
@@ -317,8 +349,16 @@ export default function TransitMap() {
     return () => window.clearInterval(interval);
   }, []);
 
+  const mapAssets = useMemo(() => {
+    if (state.assets.some((asset) => asset.id === SEATTLE_CHICAGO_ASSET_ID)) {
+      return state.assets;
+    }
+
+    return [...state.assets, seattleToChicagoDemoAsset];
+  }, [state.assets]);
+
   const filteredAssets = useMemo(() => {
-    return state.assets.filter((asset) => {
+    return mapAssets.filter((asset) => {
       const matchesSearch = [asset.id, asset.labelId, asset.customer, asset.location.city, asset.location.state, asset.carrier]
         .join(" ")
         .toLowerCase()
@@ -336,7 +376,7 @@ export default function TransitMap() {
 
       return matchesSearch && matchesType && matchesCritical;
     });
-  }, [criticalOnly, filter, search]);
+  }, [criticalOnly, filter, mapAssets, search]);
 
   const selectedAsset = filteredAssets.find((asset) => asset.id === selectedAssetId) ?? null;
 
