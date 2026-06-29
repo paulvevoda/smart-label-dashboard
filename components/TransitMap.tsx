@@ -10,7 +10,6 @@ import MapRiskLegend from "@/components/MapRiskLegend";
 import TransitMapControls from "@/components/TransitMapControls";
 import Card from "@/components/ui/Card";
 import { useDemoState } from "@/context/DemoStateContext";
-import { getRiskColor } from "@/data";
 import type { LogisticsAsset, LogisticsNode } from "@/data/types";
 
 const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false });
@@ -65,18 +64,6 @@ const getMarkerSymbol = (asset: LogisticsAsset) => {
   return "•";
 };
 
-const getMarkerIcon = (asset: LogisticsAsset, isSelected: boolean) => {
-  const color = getRiskColor(asset.riskStatus);
-  const symbol = getMarkerSymbol(asset);
-
-  return divIcon({
-    html: `<div style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:9999px;border:2px solid rgba(255,255,255,0.95);background:${color};color:${isSelected ? "#f8fafc" : "#020617"};box-shadow:${isSelected ? "0 0 0 7px rgba(34,211,238,0.24)" : "0 0 0 6px rgba(2,6,23,0.4)"};font-size:12px;font-weight:700;">${symbol}</div>`,
-    className: "border-0 bg-transparent",
-    iconSize: [30, 30],
-    iconAnchor: [15, 15],
-  });
-};
-
 const getTruckStatus = (asset: LogisticsAsset) => {
   if (asset.recentEvents.some((event) => event.toLowerCase().includes("delivered"))) return "Delivered";
   if (asset.riskStatus === "Critical") return "Exception";
@@ -105,31 +92,27 @@ const getTruckIcon = (asset: LogisticsAsset, isSelected: boolean) => {
         ? "#34d399"
         : "#22d3ee";
 
+  const symbol = getMarkerSymbol(asset);
+  const hasExceptionBadge = symbol !== "•";
+  const badgeColor = asset.riskStatus === "Critical"
+    ? "#fb7185"
+    : asset.riskStatus === "Warning"
+      ? "#f59e0b"
+      : "#64748b";
+
   return divIcon({
     html: `
-      <div style="position:relative;display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:9999px;border:2px solid rgba(255,255,255,0.95);background:${color};box-shadow:${isSelected ? "0 0 0 7px rgba(34,211,238,0.26)" : "0 0 0 4px rgba(2,6,23,0.42)"};">
+      <div style="position:relative;display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:9999px;border:2px solid rgba(255,255,255,0.95);background:${color};box-shadow:${isSelected ? "0 0 0 7px rgba(34,211,238,0.26)" : "0 0 0 4px rgba(2,6,23,0.42)"};">
         <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false" style="display:block;fill:#020617;">
           <path d="M3 7h11v7h1.6c.7 0 1.3.3 1.7.8l2.7 3.2V21h-1.8a2.7 2.7 0 0 1-5.4 0H9.2a2.7 2.7 0 0 1-5.4 0H2v-3h1V7zm12 2v5h4.2l-2-2.4c-.2-.4-.6-.6-1-.6H15zM6.5 20a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4zm9 0a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4z"/>
         </svg>
+        ${hasExceptionBadge ? `<span style="position:absolute;right:-7px;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:9999px;border:2px solid rgba(255,255,255,0.95);background:${badgeColor};color:#020617;font-size:10px;font-weight:800;line-height:1;">${symbol}</span>` : ""}
       </div>
     `,
     className: "border-0 bg-transparent",
-    iconSize: [36, 36],
-    iconAnchor: [18, 18],
+    iconSize: [44, 38],
+    iconAnchor: [19, 19],
     popupAnchor: [0, -18],
-  });
-};
-
-const getExceptionMarkerIcon = (asset: LogisticsAsset, isSelected: boolean) => {
-  const color = getRiskColor(asset.riskStatus);
-  const symbol = getMarkerSymbol(asset);
-
-  return divIcon({
-    html: `<div style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:9999px;border:2px solid rgba(255,255,255,0.95);background:${color};color:${isSelected ? "#f8fafc" : "#020617"};box-shadow:${isSelected ? "0 0 0 5px rgba(251,113,133,0.25)" : "0 0 0 4px rgba(2,6,23,0.38)"};font-size:11px;font-weight:800;">${symbol}</div>`,
-    className: "border-0 bg-transparent",
-    iconSize: [26, 26],
-    iconAnchor: [13, 13],
-    popupAnchor: [0, -13],
   });
 };
 
@@ -317,19 +300,6 @@ export default function TransitMap() {
     };
   }), [filteredAssets, state.nodes, tick]);
 
-  const exceptionMarkers = useMemo(() => routeSnapshots
-    .filter(({ asset }) => getMarkerSymbol(asset) !== "•")
-    .map((snapshot) => {
-      const offsetSeed = hashId(snapshot.asset.id) % 2 === 0 ? 0.22 : -0.22;
-      return {
-        ...snapshot,
-        coordinate: [
-          Number((snapshot.truckCoordinate[0] + (offsetSeed * 0.5)).toFixed(5)),
-          Number((snapshot.truckCoordinate[1] - offsetSeed).toFixed(5)),
-        ] as Coordinate,
-      };
-    }), [routeSnapshots]);
-
   return (
     <div className="space-y-6">
       <TransitMapControls
@@ -404,33 +374,6 @@ export default function TransitMap() {
                 </Marker>
               ))}
 
-              {exceptionMarkers.map(({ asset, coordinate }) => (
-                <Marker
-                  key={`exception-${asset.id}`}
-                  position={coordinate}
-                  icon={getExceptionMarkerIcon(asset, selectedAssetId === asset.id)}
-                  eventHandlers={{ click: () => setSelectedAssetId(asset.id) }}
-                  zIndexOffset={selectedAssetId === asset.id ? 900 : 500}
-                >
-                  <Popup>
-                    <div className="min-w-[220px] text-sm text-slate-700">
-                      <p className="font-semibold text-slate-900">Exception marker {getMarkerSymbol(asset)}</p>
-                      <p className="mt-1 text-slate-600">Shipment {asset.id}</p>
-                      <p className="mt-2 text-slate-600">Recent event: {getActiveAlertSummary(asset)}</p>
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
-
-              {filteredAssets.map((asset) => (
-                <Marker
-                  key={`asset-location-${asset.id}`}
-                  position={asset.location.coordinates}
-                  icon={getMarkerIcon(asset, selectedAssetId === asset.id)}
-                  eventHandlers={{ click: () => setSelectedAssetId(asset.id) }}
-                  zIndexOffset={selectedAssetId === asset.id ? 700 : 300}
-                />
-              ))}
             </MapContainer>
           </div>
         </Card>
